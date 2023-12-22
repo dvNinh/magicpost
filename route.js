@@ -4,6 +4,7 @@ const router = express.Router();
 const transactionController = require('./controllers/transaction');
 const orderController = require('./controllers/order');
 const accountController = require('./controllers/account');
+const loginController = require('./controllers/login');
 
 router.get('/transaction', transactionController.getTransaction);
 router.post('/transaction', transactionController.createTransaction);
@@ -18,5 +19,7 @@ router.get('/account', accountController.getAccount);
 router.post('/account', accountController.createAccount);
 router.put('/account', accountController.updateAccount);
 router.delete('/account', accountController.deleteAccount);
+
+router.post('/login', loginController.login);
 
 module.exports = router;

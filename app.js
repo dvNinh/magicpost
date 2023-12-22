@@ -7,6 +7,13 @@ app.use(express.urlencoded({
 }));
 app.use(express.json());
 
+const session = require('express-session');
+app.use(session({
+    secret: 'keyboard cat',
+    resave: true,
+    saveUninitialized: true,
+}));
+
 const router = require('./route.js');
 app.use(router);
 
