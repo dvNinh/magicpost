@@ -1,15 +1,10 @@
-var mysql = require('mysql');
+var mysql = require('mysql2');
 
-var con = mysql.createConnection({
+var pool = mysql.createPool({
     host: "localhost",
     user: "root",
     password: "root",
     database: "magicpost"
-});
+}).promise();
 
-con.connect(function(err) {
-    if (err) throw err;
-    console.log("Connected!");
-});
-
-module.exports = con;
+module.exports = pool;

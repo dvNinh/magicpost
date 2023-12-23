@@ -1,38 +1,61 @@
-const schema = require('./schema')
-
-const {
-    selectQuery,
-    insertQuery,
-    updateQuery,
-    deleteQuery
-} = require('../utils/query');
+var pool = require('../config/db');
 
 class TransactionModel {
-    getTransaction(param, page) {
-        var sql = selectQuery(
-            'ta.*, ct.CityName, dt.DistrictName',
-            'TRANSACTION_AREA ta ' +
+    async getTransactionById(id) {
+        var sql = 
+            'SELECT ta.*, ct.CityName, dt.DistrictName ' +
+            'FROM TRANSACTION_AREA ta ' +
             'JOIN CITY ct ON ta.CityID = ct.CityID ' +
-            'JOIN DISTRICT dt ON ta.DistrictID = dt.DistrictID and ta.CityID = dt.CityID',
-            param,
-            ` ORDER BY ta.TransactionAreaID ASC LIMIT ${(page - 1) * 10}, 10`
-        );
-        return schema.get(sql);
+            'JOIN DISTRICT dt ON ta.DistrictID = dt.DistrictID and ta.CityID = dt.CityID ' +
+            'WHERE TransactionAreaID = ?';
+        const [rows] = await pool.query(sql, [id]);
+        return rows[0];
     }
 
-    createTransaction(param) {
-        var sql = insertQuery('TRANSACTION_AREA', param);
-        return schema.insert(sql);
+    async getTransaction(param, page) {
+        let where = '';
+        if (Object.keys(param).length > 0) {
+            where = 'WHERE ';
+            for (const key of Object.keys(param)) {
+                where += `${key} = ? AND `;
+            }
+            where = where.slice(0, -4);
+        }
+        var sql = 
+            'SELECT ta.*, ct.CityName, dt.DistrictName ' +
+            'FROM TRANSACTION_AREA ta ' +
+            'JOIN CITY ct ON ta.CityID = ct.CityID ' +
+            'JOIN DISTRICT dt ON ta.DistrictID = dt.DistrictID and ta.CityID = dt.CityID ' +
+            `${where}` +
+            `ORDER BY ta.TransactionAreaID ASC LIMIT ${(page - 1) * 10}, 10`;
+        const [rows] = await pool.query(sql, Object.values(param));
+        return rows;
     }
 
-    updateTransaction(param, condition) {
-        var sql = updateQuery('TRANSACTION_AREA', param, condition);
-        return schema.update(sql);
+    async createTransaction(param) {
+        var sql = 'INSERT INTO TRANSACTION_AREA SET ?';
+        const [results] = await pool.query(sql, param);
+        return results;
     }
 
-    deleteTransaction(param) {
-        var sql = deleteQuery('TRANSACTION_AREA', param);
-        return schema.delete(sql);
+    async updateTransaction(update, condition) {
+        let where = '';
+        if (Object.keys(condition).length > 0) {
+            where = 'WHERE ';
+            for (const key of Object.keys(condition)) {
+                where += `${key} = ? AND `;
+            }
+            where = where.slice(0, -5);
+        }
+        var sql = `UPDATE TRANSACTION_AREA SET ? ${where}`;
+        const [results] = await pool.query(sql, [update, ...Object.values(condition)]);
+        return results;
+    }
+
+    async deleteTransaction(id) {
+        var sql = 'DELETE FROM TRANSACTION_AREA WHERE TransactionAreaID = ?';
+        const [results] = await pool.query(sql, [id]);
+        return results;
     }
 }
 

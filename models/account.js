@@ -1,36 +1,61 @@
-const schema = require('./schema')
-
-const {
-    selectQuery,
-    insertQuery,
-    updateQuery,
-    deleteQuery
-} = require('../utils/query');
+var pool = require('../config/db');
 
 class AccountModel {
-    getAccount(param) {
-        var sql = selectQuery(
-            'ac.username, ac.EmployeeID, em.fullname, em.role',
-            'ACCOUNT ac ' +
-            'JOIN EMPLOYEES em ON ac.EmployeeID = em.id',
-            param,
-        );
-        return schema.get(sql);
+    async getAccountByUsername(id) {
+        var sql = 
+            // 'SELECT ac.username, ac.employees_id, em.full_name, em.role ' +
+            'SELECT * ' +
+            'FROM ACCOUNT ac ' +
+            // 'JOIN EMPLOYEES em ON ac.employees_id = em.id ' +
+            'WHERE username = ?';
+        const [rows] = await pool.query(sql, [id]);
+        return rows[0];
     }
 
-    createAccount(param) {
-        var sql = insertQuery('ACCOUNT', param);
-        return schema.insert(sql);
+    async getAccount(param, page) {
+        let where = '';
+        if (Object.keys(param).length > 0) {
+            where = 'WHERE ';
+            for (const key of Object.keys(param)) {
+                where += `${key} = ? AND `;
+            }
+            where = where.slice(0, -4);
+        }
+        var sql = 
+            // 'SELECT ac.username, ac.employees_id, em.full_name, em.role ' +
+            'SELECT * ' +
+            'FROM ACCOUNT ac ' +
+            // 'JOIN EMPLOYEES em ON ac.employees_id = em.id ' +
+            `${where}` +
+            `ORDER BY username ASC LIMIT ${(page - 1) * 10}, 10`;
+        const [rows] = await pool.query(sql, Object.values(param));
+        return rows;
     }
 
-    updateAccount(param, condition) {
-        var sql = updateQuery('ACCOUNT', param, condition);
-        return schema.update(sql);
+    async createAccount(param) {
+        var sql = 'INSERT INTO ACCOUNT SET ?';
+        const [results] = await pool.query(sql, param);
+        return results;
     }
 
-    deleteAccount(param) {
-        var sql = deleteQuery('ACCOUNT', param);
-        return schema.delete(sql);
+    async updateAccount(update, condition) {
+        let where = '';
+        if (Object.keys(condition).length > 0) {
+            where = 'WHERE ';
+            for (const key of Object.keys(condition)) {
+                where += `${key} = ? AND `;
+            }
+            where = where.slice(0, -5);
+        }
+        var sql = `UPDATE ACCOUNT SET ? ${where}`;
+        const [results] = await pool.query(sql, [update, ...Object.values(condition)]);
+        return results;
+    }
+
+    async deleteAccount(id) {
+        var sql = 'DELETE FROM ACCOUNT WHERE username = ?';
+        const [results] = await pool.query(sql, [id]);
+        return results;
     }
 }
 
