@@ -1,25 +1,26 @@
 const express = require('express');
 const router = express.Router();
 
-const transactionController = require('./controllers/transaction');
-const orderController = require('./controllers/order');
-const accountController = require('./controllers/account');
-const loginController = require('./controllers/login');
-
-router.get('/transaction', transactionController.getTransaction);
-router.post('/transaction', transactionController.createTransaction);
-router.put('/transaction', transactionController.updateTransaction);
-router.delete('/transaction', transactionController.deleteTransaction);
-
-router.get('/order', orderController.getOrder);
-router.post('/order', orderController.createOrder);
-router.put('/order', orderController.updateOrder);
-
-router.get('/account', accountController.getAccount);
-router.post('/account', accountController.createAccount);
-router.put('/account', accountController.updateAccount);
-router.delete('/account', accountController.deleteAccount);
+const loginController = require('./controllers/login.controller');
+const authController = require('./controllers/auth.controller');
+const accountController = require('./controllers/account.controller');
+const transactionController = require('./controllers/transaction.controller');
+const orderController = require('./controllers/order.controller');
 
 router.post('/login', loginController.login);
+
+router.get('/account', authController.isManager, accountController.getAccount);
+router.post('/account', authController.isManager, accountController.createAccount);
+router.put('/account', authController.isLogged, accountController.updateAccount);
+router.delete('/account', authController.isManager, accountController.deleteAccount);
+
+router.get('/transaction', authController.isTransactionManager, transactionController.getTransaction);
+router.post('/transaction', authController.isLeader, transactionController.createTransaction);
+router.put('/transaction', authController.isLeader, transactionController.updateTransaction);
+router.delete('/transaction', authController.isLeader, transactionController.deleteTransaction);
+
+router.get('/order', authController.isLogged, orderController.getOrder);
+router.post('/order', authController.isLogged, orderController.createOrder);
+router.put('/order', authController.isLogged, orderController.updateOrder);
 
 module.exports = router;

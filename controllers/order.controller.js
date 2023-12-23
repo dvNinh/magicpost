@@ -1,4 +1,4 @@
-const orderModel = require('../models/order');
+const orderModel = require('../models/order.model');
 
 const pool = require('../config/db');
 
