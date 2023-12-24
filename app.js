@@ -12,7 +12,10 @@ app.use(session({
     secret: 'keyboard cat',
     resave: true,
     saveUninitialized: true,
-    cookie: { maxAge: 600000 },
+    cookie: {
+        maxAge: 600000,
+        sameSite: true
+    },
 }));
 
 var cors = require('cors')

@@ -1,14 +1,16 @@
 const transactionModel = require('../models/transaction.model');
+const CityModel = require('../models/city.model');
+const DistrictModel = require('../models/district.model');
 
 class TransactionController {
     async getTransaction(req, res, next) {
         const param = {};
-        if (req.session.user.role === leader) {
+        if (req.session.user.role === 'leader') {
             if (req.query.id && !/^GD\d{4}$/.test(req.query.id)) {
                 res.status(200).json([]);
                 return;
             } else {
-                param.TransactionAreaID = req.query.id;
+                req.query.id ? param.TransactionAreaID = req.query.id : null;
             }
         } else {
             param.TransactionAreaID = req.session.user.transaction;
@@ -50,8 +52,22 @@ class TransactionController {
         const param = {};
         param.TransactionAreaID = newTransactionId;
         req.body.name ? param.TransactionAreaNAME = req.body.name : null;
-        req.body.city ? param.CityID = req.body.city : null;
-        req.body.district ? param.DistrictID = req.body.district : null;
+        if (req.body.city) {
+            const city = await CityModel.getCityById(req.body.city);
+            if (!city) {
+                res.status(400).json({ message: 'city id unknown' });
+                return;
+            }
+            param.CityID = city.id;
+        }
+        if (req.body.district) {
+            const district = await DistrictModel.getDistrictById(req.body.district);
+            if (!district) {
+                res.status(400).json({ message: 'district id unknown' });
+                return;
+            }
+            param.DistrictID = district.id;
+        }
         req.body.address ? param.Address = req.body.address : null;
         req.body.coordinatesX ? param.CoordinateX = req.body.coordinatesX : null;
         req.body.coordinatesY ? param.CoordinateY = req.body.coordinatesY : null;
@@ -63,8 +79,22 @@ class TransactionController {
     async updateTransaction(req, res, next) {
         const update = {};
         req.body.name ? update.TransactionAreaNAME = req.body.name : null;
-        req.body.city ? update.CityID = req.body.city : null;
-        req.body.district ? update.DistrictID = req.body.district : null;
+        if (req.body.city) {
+            const city = await CityModel.getCityById(req.body.city);
+            if (!city) {
+                res.status(400).json({ message: 'city id unknown' });
+                return;
+            }
+            update.CityID = city.id;
+        }
+        if (req.body.district) {
+            const district = await DistrictModel.getDistrictById(req.body.district);
+            if (!district) {
+                res.status(400).json({ message: 'district id unknown' });
+                return;
+            }
+            update.DistrictID = district.id;
+        }
         req.body.address ? update.Address = req.body.address : null;
         req.body.coordinatesX ? update.CoordinateX = req.body.coordinatesX : null;
         req.body.coordinatesY ? update.CoordinateY = req.body.coordinatesY : null;
@@ -72,8 +102,22 @@ class TransactionController {
         const condition = {};
         req.query.id ? condition.TransactionAreaID = req.query.id : null;
         req.query.name ? condition.TransactionAreaNAME = req.query.name : null;
-        req.query.city ? condition.CityName = req.query.city : null;
-        req.query.district ? condition.DistrictName = req.query.district : null;
+        if (req.query.city) {
+            const city = await CityModel.getCityById(req.body.city);
+            if (!city) {
+                res.status(400).json({ message: 'city id unknown' });
+                return;
+            }
+            condition.CityID = city.id;
+        }
+        if (req.query.district) {
+            const district = await DistrictModel.getDistrictById(req.body.district);
+            if (!district) {
+                res.status(400).json({ message: 'district id unknown' });
+                return;
+            }
+            condition.DistrictID = district.id;
+        }
         req.query.address ? condition.Address = req.query.address : null;
         req.query.coordinatesX ? condition.CoordinateX = req.query.coordinatesX : null;
         req.query.coordinatesY ? condition.CoordinateY = req.query.coordinatesY : null;

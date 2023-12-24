@@ -3,8 +3,8 @@ const saltRounds = 10;
 const accountModel = require('./models/account.model');
 
 const account = {
-    username: 'admin2',
-    password: 'admin',
+    username: 'admin',
+    password: 'admin123',
     role: 'leader'
 };
 

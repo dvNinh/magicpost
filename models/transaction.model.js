@@ -1,14 +1,20 @@
-var pool = require('../config/db');
+const pool = require('../config/db');
+
+const CityModel = require('./city.model');
+const DistrictModel = require('./district.model');
 
 class TransactionModel {
     async getTransactionById(id) {
         var sql = 
-            'SELECT ta.*, ct.CityName, dt.DistrictName ' +
-            'FROM TRANSACTION_AREA ta ' +
-            'JOIN CITY ct ON ta.CityID = ct.CityID ' +
-            'JOIN DISTRICT dt ON ta.DistrictID = dt.DistrictID and ta.CityID = dt.CityID ' +
+            'SELECT * ' +
+            'FROM TRANSACTION_AREA' +
             'WHERE TransactionAreaID = ?';
         const [rows] = await pool.query(sql, [id]);
+        const city = await CityModel.getCityById(rows[0].CityID);
+        const district = await DistrictModel.getDistrictById(rows[0].DistrictID);
+        if (!city || !district || city.id != district.cityId) return null;
+        rows[0].CityName = city.name;
+        rows[0].DistrictName = district.districtName;
         return rows[0];
     }
 
@@ -32,14 +38,21 @@ class TransactionModel {
             where = where.slice(0, -4);
         }
         var sql = 
-            'SELECT ta.*, ct.CityName, dt.DistrictName ' +
-            'FROM TRANSACTION_AREA ta ' +
-            'JOIN CITY ct ON ta.CityID = ct.CityID ' +
-            'JOIN DISTRICT dt ON ta.DistrictID = dt.DistrictID and ta.CityID = dt.CityID ' +
+            'SELECT * ' +
+            'FROM TRANSACTION_AREA ' +
             `${where}` +
-            `ORDER BY ta.TransactionAreaID ASC LIMIT ${(page - 1) * 10}, 10`;
+            `ORDER BY TransactionAreaID ASC LIMIT ${(page - 1) * 10}, 10`;
         const [rows] = await pool.query(sql, Object.values(param));
-        return rows;
+        let transactions = [];
+        for (let row of rows) {
+            const city = await CityModel.getCityById(row.CityID);
+            const district = await DistrictModel.getDistrictById(row.DistrictID);
+            if (!city || !district || city.id != district.cityId) continue;
+            row.CityName = city.name;
+            row.DistrictName = district.districtName;
+            transactions.push(row);
+        }
+        return transactions;
     }
 
     async createTransaction(param) {
