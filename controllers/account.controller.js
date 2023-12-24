@@ -28,9 +28,13 @@ class AccountController {
         const param = {};
         req.body.username ? param.username = req.body.username : null;
         req.body.password ? param.password = req.body.password : null;
-        req.body.role ? param.role = req.body.role : null;
-        if (req.session.user.role === 'leader') req.body.transaction ? param.transaction = req.body.transaction : null;
-        else param.transaction = req.session.user.transaction;
+        if (req.session.user.role === 'leader') {
+            req.body.transaction ? param.transaction = req.body.transaction : null;
+            req.body.role ? param.role = req.body.role : null;
+        } else {
+            param.transaction = req.session.user.transaction;
+            req.session.user.role = 'dean_tran' ? param.role = 'transacting' : param.role = 'gathering';
+        }
         await accountModel.createAccount(param);
         res.status(201).json({ message: 'create account success' });
     }

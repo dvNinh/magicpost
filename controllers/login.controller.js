@@ -7,7 +7,7 @@ class LoginController {
             password: req.body.password
         };
         if (!param.username) res.status(401).json({ message: 'username is undefined' });
-        else if (!req.body.password) res.status(401).json({ message: 'password is undefined' });
+        else if (!param.password) res.status(401).json({ message: 'password is undefined' });
         else {
             const account = await accountModel.getAccount(param, 1);
             if (!account[0]) res.status(403).json({ message: 'username or password is incorrect' });

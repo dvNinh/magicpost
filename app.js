@@ -13,7 +13,12 @@ app.use(session({
     resave: true,
     saveUninitialized: true,
     cookie: { maxAge: 600000 },
+}));
 
+var cors = require('cors')
+app.use(cors({
+	origin: (origin, callback) => { callback(null, true); },
+	credentials: true
 }));
 
 const router = require('./route.js');
