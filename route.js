@@ -8,6 +8,8 @@ const transactionController = require('./controllers/transaction.controller');
 const orderController = require('./controllers/order.controller');
 
 router.post('/login', loginController.login);
+router.get('/logout', authController.isLogged, loginController.logout);
+router.get('/role', authController.isLogged, loginController.getRole);
 
 router.get('/account', authController.isManager, accountController.getAccount);
 router.post('/account', authController.isManager, accountController.createAccount);
