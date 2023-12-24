@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 const accountModel = require('../models/account.model');
+const transactionModel = require('../models/transaction.model');
 
 const validate = require('../utils/validate');
 
@@ -59,9 +60,45 @@ class AccountController {
         }
 
         if (req.session.user.role === 'leader') {
-            req.body.transaction ? param.transaction = req.body.transaction : null;
-            req.body.role ? param.role = req.body.role : null;
+            if (!req.body.role) {
+                res.status(400).json({ message: 'role is required' });
+                return;
+            }
+            param.role = req.body.role
+            if (req.body.transaction) {
+                param.transaction = req.body.transaction;
+                if (req.body.role == 'dean_tran') {
+                    if (!/^GD\d{4}$/.test(param.transaction)) {
+                        res.status(400).json({ message: 'invalid transaction for dean_tran role' });
+                        return;
+                    }
+                } else {
+                    if (!/^TK\d{4}$/.test(param.transaction)) {
+                        res.status(400).json({ message: 'invalid transaction for dean_gather role' });
+                        return;
+                    }
+                }
+                const transaction = await transactionModel.getTransactionById(param.transaction);
+                if (!transaction) {
+                    res.status(400).json({ message: 'transaction unknown' });
+                    return;
+                }
+                if (transaction.Manager) {
+                    await accountModel.updateAccount(
+                        { transaction: null },
+                        { username: transaction.Manager }
+                    );
+                }
+                await transactionModel.updateTransaction(
+                    { manager: param.username },
+                    { TransactionAreaID: transaction.TransactionAreaID }
+                );
+            }
         } else {
+            if (!req.session.user.transaction) {
+                res.status(400).json({ message: 'access is not allowed' });
+                return;
+            }
             param.transaction = req.session.user.transaction;
             req.session.user.role = 'dean_tran' ? param.role = 'transacting' : param.role = 'gathering';
         }
@@ -83,8 +120,44 @@ class AccountController {
         }
 
         if (req.session.user.role === 'leader') {
-            req.body.role ? update.role = req.body.role : null
-            req.body.transaction ? update.transaction = req.body.transaction : null;
+            if (req.body.transaction) {
+                if (!req.query.username) {
+                    res.status(400).json({ message: 'account unknown' });
+                    return;
+                }
+                const account = await accountModel.getAccountByUsername(req.query.username);
+                if (account.role == 'dean_tran') {
+                    if (!/^GD\d{4}$/.test(req.body.transaction)) {
+                        res.status(400).json({ message: 'invalid transaction for dean_tran role' });
+                        return;
+                    }
+                } else {
+                    if (!/^TK\d{4}$/.test(req.body.transaction)) {
+                        res.status(400).json({ message: 'invalid transaction for dean_gather role' });
+                        return;
+                    }
+                }
+                if (!account) {
+                    res.status(400).json({ message: 'account unknown' });
+                    return;
+                }
+                const transaction = await transactionModel.getTransactionById(req.body.transaction);
+                if (!transaction) {
+                    res.status(400).json({ message: 'transaction unknown' });
+                    return;
+                }
+                if (transaction.Manager) {
+                    await accountModel.updateAccount(
+                        { transaction: null },
+                        { username: transaction.Manager }
+                    );
+                }
+                update.transaction = req.body.transaction
+                await transactionModel.updateTransaction(
+                    { manager: account.username },
+                    { TransactionAreaID: transaction.TransactionAreaID }
+                );
+            }
         }
 
         if (Object.keys(update).length == 0) {

@@ -7,6 +7,7 @@ const accountController = require('./controllers/account.controller');
 const cityController = require('./controllers/city.controller');
 const districtController = require('./controllers/district.controller');
 const transactionController = require('./controllers/transaction.controller');
+const gatheringController = require('./controllers/gathering.controller');
 const orderController = require('./controllers/order.controller');
 
 router.post('/login', loginController.login);
@@ -29,6 +30,11 @@ router.get('/transaction', authController.isTransactionManager, transactionContr
 router.post('/transaction', authController.isLeader, transactionController.createTransaction);
 router.put('/transaction', authController.isLeader, transactionController.updateTransaction);
 router.delete('/transaction', authController.isLeader, transactionController.deleteTransaction);
+
+router.get('/gathering', authController.isGatheringManager, gatheringController.getGathering);
+router.post('/gathering', authController.isLeader, gatheringController.createGathering);
+router.put('/gathering', authController.isLeader, gatheringController.updateGathering);
+router.delete('/gathering', authController.isLeader, gatheringController.deleteGathering);
 
 router.get('/order', authController.isLogged, orderController.getOrder);
 router.post('/order', authController.isLogged, orderController.createOrder);
