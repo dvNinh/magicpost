@@ -3,6 +3,7 @@ const saltRounds = 10;
 
 const accountModel = require('../models/account.model');
 const transactionModel = require('../models/transaction.model');
+const gatheringModel = require('../models/gathering.model');
 
 const validate = require('../utils/validate');
 
@@ -62,6 +63,9 @@ class AccountController {
         if (req.session.user.role === 'leader') {
             if (!req.body.role) {
                 res.status(400).json({ message: 'role is required' });
+                return;
+            } else if (!validate.validateRole(req.body.role)){
+                res.status(400).json({ message: 'role is invalid' });
                 return;
             }
             param.role = req.body.role
@@ -126,37 +130,69 @@ class AccountController {
                     return;
                 }
                 const account = await accountModel.getAccountByUsername(req.query.username);
+                if (!account) {
+                    res.status(400).json({ message: 'account unknown' });
+                    return;
+                }
                 if (account.role == 'dean_tran') {
                     if (!/^GD\d{4}$/.test(req.body.transaction)) {
                         res.status(400).json({ message: 'invalid transaction for dean_tran role' });
                         return;
+                    }
+                    const transaction = await transactionModel.getTransactionById(req.body.transaction);
+                    if (!transaction) {
+                        res.status(400).json({ message: 'transaction unknown' });
+                        return;
+                    }
+                    if (transaction.Manager) {
+                        await accountModel.updateAccount(
+                            { transaction: null },
+                            { username: transaction.Manager }
+                        );
+                    }
+                    update.transaction = req.body.transaction
+                    await transactionModel.updateTransaction(
+                        { manager: account.username },
+                        { TransactionAreaID: transaction.TransactionAreaID }
+                    );
+
+                    const oldTransaction = await transactionModel.getTransactionByManager(account.username);
+                    if (oldTransaction) {
+                        await transactionModel.updateTransaction(
+                            { manager: null },
+                            { TransactionAreaID: oldTransaction.TransactionAreaID }
+                        );
                     }
                 } else {
                     if (!/^TK\d{4}$/.test(req.body.transaction)) {
                         res.status(400).json({ message: 'invalid transaction for dean_gather role' });
                         return;
                     }
-                }
-                if (!account) {
-                    res.status(400).json({ message: 'account unknown' });
-                    return;
-                }
-                const transaction = await transactionModel.getTransactionById(req.body.transaction);
-                if (!transaction) {
-                    res.status(400).json({ message: 'transaction unknown' });
-                    return;
-                }
-                if (transaction.Manager) {
-                    await accountModel.updateAccount(
-                        { transaction: null },
-                        { username: transaction.Manager }
+                    const gathering = await gatheringModel.getGatheringById(req.body.transaction);
+                    if (!gathering) {
+                        res.status(400).json({ message: 'transaction unknown' });
+                        return;
+                    }
+                    if (gathering.manager) {
+                        await accountModel.updateAccount(
+                            { transaction: null },
+                            { username: gathering.manager }
+                        );
+                    }
+                    update.transaction = req.body.transaction
+                    await gatheringModel.updateGathering(
+                        { manager: account.username },
+                        { id: gathering.id }
                     );
-                }
-                update.transaction = req.body.transaction
-                await transactionModel.updateTransaction(
-                    { manager: account.username },
-                    { TransactionAreaID: transaction.TransactionAreaID }
-                );
+
+                    const oldGathering = await gatheringModel.getGatheringByManager(account.username);
+                    if (oldGathering) {
+                        await gatheringModel.updateGathering(
+                            { manager: null },
+                            { id: oldGathering.id }
+                        );
+                    }
+                }                
             }
         }
 

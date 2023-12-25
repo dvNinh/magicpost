@@ -3,12 +3,12 @@ const pool = require('../config/db');
 const cityModel = require('./city.model');
 const districtModel = require('./district.model');
 
-class TransactionModel {
-    async getTransactionById(id) {
+class GatheringModel {
+    async getGatheringById(id) {
         var sql = 
             'SELECT * ' +
-            'FROM TRANSACTION_AREA ' +
-            'WHERE TransactionAreaID = ?';
+            'FROM GATHERING_AREA ' +
+            'WHERE id = ?';
         const [rows] = await pool.query(sql, [id]);
         if (!rows[0]) return null;
         const city = await cityModel.getCityById(rows[0].CityID);
@@ -19,11 +19,11 @@ class TransactionModel {
         return rows[0];
     }
 
-    async getTransactionByManager(username) {
+    async getGatheringByManager(username) {
         var sql = 
             'SELECT * ' +
-            'FROM TRANSACTION_AREA ' +
-            'WHERE Manager = ?';
+            'FROM GATHERING_AREA ' +
+            'WHERE manager = ?';
         const [rows] = await pool.query(sql, [username]);
         if (!rows[0]) return null;
         const city = await cityModel.getCityById(rows[0].CityID);
@@ -34,18 +34,33 @@ class TransactionModel {
         return rows[0];
     }
 
-    async getLastTransactionId() {
-        let sql =
-            'SELECT TransactionAreaID ' +
-            'FROM TRANSACTION_AREA ' +
-            'WHERE TransactionAreaID LIKE "GD____" ' +
-            'ORDER BY TransactionAreaID DESC LIMIT 1';
-        const [rows] = await pool.query(sql);
-        if (!rows[0]) return 'GD0000';
-        return rows[0].TransactionAreaID;
+    async getGatheringByTransaction(transaction) {
+        var sql = 
+            'SELECT * ' +
+            'FROM GATHERING_AREA ' +
+            'WHERE transaction = ?';
+        const [rows] = await pool.query(sql, [transaction]);
+        if (!rows[0]) return null;
+        const city = await cityModel.getCityById(rows[0].CityID);
+        const district = await districtModel.getDistrictById(rows[0].DistrictID);
+        if (!city || !district || city.id != district.cityId) return null;
+        rows[0].CityName = city.name;
+        rows[0].DistrictName = district.districtName;
+        return rows[0];
     }
 
-    async getTransaction(param, page) {
+    async getLastGatheringId() {
+        let sql =
+            'SELECT id ' +
+            'FROM GATHERING_AREA ' +
+            'WHERE id LIKE "TK____" ' +
+            'ORDER BY id DESC LIMIT 1';
+        const [rows] = await pool.query(sql);
+        if (!rows[0]) return 'TK0000';
+        return rows[0].id;
+    }
+
+    async getGathering(param, page) {
         let where = '';
         if (Object.keys(param).length > 0) {
             for (const key of Object.keys(param)) {
@@ -54,24 +69,24 @@ class TransactionModel {
         }
         var sql = 
             'SELECT * ' +
-            'FROM TRANSACTION_AREA ' +
-            'WHERE TransactionAreaID LIKE "GD____" ' +
+            'FROM GATHERING_AREA ' +
+            'WHERE id LIKE "TK____" ' +
             `${where}` +
-            `ORDER BY TransactionAreaID ASC LIMIT ?, 10`;
+            `ORDER BY id ASC LIMIT ?, 10`;
         const [rows] = await pool.query(sql, [ ...Object.values(param), (page - 1) * 10 ]);
-        let transactions = [];
+        let gatherings = [];
         for (let row of rows) {
             const city = await cityModel.getCityById(row.CityID);
             const district = await districtModel.getDistrictById(row.DistrictID);
             if (!city || !district || city.id != district.cityId) continue;
             row.CityName = city.name;
             row.DistrictName = district.districtName;
-            transactions.push(row);
+            gatherings.push(row);
         }
-        return transactions;
+        return gatherings;
     }
 
-    async searchTransaction(searchValue, param, page, limit, sortOrder) {
+    async searchGathering(searchValue, param, page, limit, sortOrder) {
         const sort = sortOrder == 'ascending' ? 'ASC' : 'DESC';
         let where = '';
         if (Object.keys(param).length > 0) {
@@ -81,31 +96,31 @@ class TransactionModel {
         }
         var sql = 
             'SELECT * ' +
-            'FROM TRANSACTION_AREA ' +
-            `WHERE (TransactionAreaID LIKE "%${searchValue}%" OR TransactionAreaNAME LIKE "%${searchValue}%") ` +
+            'FROM GATHERING_AREA ' +
+            `WHERE (id LIKE "%${searchValue}%" OR name LIKE "%${searchValue}%") ` +
             `${where}` +
-            `ORDER BY TransactionAreaID ${sort} LIMIT ?, ?`;
+            `ORDER BY id ${sort} LIMIT ?, ?`;
         const [rows] = await pool.query(sql, [ ...Object.values(param), (page - 1) * limit, limit ]);
-        let transactions = [];
+        let gatherings = [];
         for (let row of rows) {
             const city = await cityModel.getCityById(row.CityID);
             const district = await districtModel.getDistrictById(row.DistrictID);
             if (!city || !district || city.id != district.cityId) continue;
             row.CityName = city.name;
             row.DistrictName = district.districtName;
-            transactions.push(row);
+            gatherings.push(row);
         }
-        return transactions;
+        return gatherings;
     }
 
 
-    async createTransaction(param) {
-        var sql = 'INSERT INTO TRANSACTION_AREA SET ?';
+    async createGathering(param) {
+        var sql = 'INSERT INTO GATHERING_AREA SET ?';
         const [results] = await pool.query(sql, param);
         return results;
     }
 
-    async updateTransaction(update, condition) {
+    async updateGathering(update, condition) {
         let where = '';
         if (Object.keys(condition).length > 0) {
             where = 'WHERE ';
@@ -114,16 +129,16 @@ class TransactionModel {
             }
             where = where.slice(0, -5);
         }
-        var sql = `UPDATE TRANSACTION_AREA SET ? ${where}`;
+        var sql = `UPDATE GATHERING_AREA SET ? ${where}`;
         const [results] = await pool.query(sql, [update, ...Object.values(condition)]);
         return results;
     }
 
-    async deleteTransaction(id) {
-        var sql = 'DELETE FROM TRANSACTION_AREA WHERE TransactionAreaID = ?';
+    async deleteGathering(id) {
+        var sql = 'DELETE FROM GATHERING_AREA WHERE id = ?';
         const [results] = await pool.query(sql, [id]);
         return results;
     }
 }
 
-module.exports = new TransactionModel;
+module.exports = new GatheringModel;

@@ -1,11 +1,12 @@
 const accountModel = require('../models/account.model');
 const transactionModel = require('../models/transaction.model');
-const CityModel = require('../models/city.model');
-const DistrictModel = require('../models/district.model');
+const cityModel = require('../models/city.model');
+const districtModel = require('../models/district.model');
 
 class TransactionController {
     async getTransaction(req, res, next) {
         const param = {};
+
         if (req.session.user.role === 'leader') {
             if (req.query.id && !/^GD\d{4}$/.test(req.query.id)) {
                 res.status(200).json([]);
@@ -16,14 +17,33 @@ class TransactionController {
         } else {
             param.TransactionAreaID = req.session.user.transaction;
         }
+
         req.query.name ? param.TransactionAreaNAME = req.query.name : null;
-        req.query.city ? param.CityName = req.query.city : null;
-        req.query.district ? param.DistrictName = req.query.district : null;
+
+        if (req.query.city) {
+            const city = await cityModel.getCityById(req.query.city);
+            if (!city) {
+                res.status(400).json({ message: 'city id unknown' });
+                return;
+            }
+            param.CityID = city.id;
+        }
+
+        if (req.query.district) {
+            const district = await districtModel.getDistrictById(req.query.district);
+            if (!district) {
+                res.status(400).json({ message: 'district id unknown' });
+                return;
+            }
+            param.DistrictID = district.id;
+        }
+
         req.query.address ? param.Address = req.query.address : null;
         req.query.coordinatesX ? param.CoordinateX = req.query.coordinatesX : null;
         req.query.coordinatesY ? param.CoordinateY = req.query.coordinatesY : null;
         req.query.manager ? param.Manager = req.query.manager : null;
         const page = req.query.page ? req.query.page : 1;
+
         const transactions = await transactionModel.getTransaction(param, page);
         let transactionList = [];
         for (let transaction of transactions) {
@@ -32,6 +52,8 @@ class TransactionController {
                 name: transaction.TransactionAreaNAME,
                 city: transaction.CityName,
                 district: transaction.DistrictName,
+                cityId: transaction.CityID,
+                districtId: transaction.DistrictID,
                 address: transaction.Address,
                 coordinatesX: transaction.CoordinateX,
                 coordinatesY: transaction.CoordinateY,
@@ -52,7 +74,7 @@ class TransactionController {
         param.TransactionAreaID = newTransactionId;
         req.body.name ? param.TransactionAreaNAME = req.body.name : null;
         if (req.body.city) {
-            const city = await CityModel.getCityById(req.body.city);
+            const city = await cityModel.getCityById(req.body.city);
             if (!city) {
                 res.status(400).json({ message: 'city id unknown' });
                 return;
@@ -60,7 +82,7 @@ class TransactionController {
             param.CityID = city.id;
         }
         if (req.body.district) {
-            const district = await DistrictModel.getDistrictById(req.body.district);
+            const district = await districtModel.getDistrictById(req.body.district);
             if (!district) {
                 res.status(400).json({ message: 'district id unknown' });
                 return;
@@ -98,7 +120,7 @@ class TransactionController {
 
         req.body.name ? update.TransactionAreaNAME = req.body.name : null;
         if (req.body.city) {
-            const city = await CityModel.getCityById(req.body.city);
+            const city = await cityModel.getCityById(req.body.city);
             if (!city) {
                 res.status(400).json({ message: 'city id unknown' });
                 return;
@@ -107,7 +129,7 @@ class TransactionController {
         }
 
         if (req.body.district) {
-            const district = await DistrictModel.getDistrictById(req.body.district);
+            const district = await districtModel.getDistrictById(req.body.district);
             if (!district) {
                 res.status(400).json({ message: 'district id unknown' });
                 return;
@@ -158,7 +180,7 @@ class TransactionController {
         req.query.name ? condition.TransactionAreaNAME = req.query.name : null;
 
         if (req.query.city) {
-            const city = await CityModel.getCityById(req.body.city);
+            const city = await cityModel.getCityById(req.body.city);
             if (!city) {
                 res.status(400).json({ message: 'city id unknown' });
                 return;
@@ -167,7 +189,7 @@ class TransactionController {
         }
 
         if (req.query.district) {
-            const district = await DistrictModel.getDistrictById(req.body.district);
+            const district = await districtModel.getDistrictById(req.body.district);
             if (!district) {
                 res.status(400).json({ message: 'district id unknown' });
                 return;

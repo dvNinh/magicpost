@@ -9,6 +9,7 @@ const districtController = require('./controllers/district.controller');
 const transactionController = require('./controllers/transaction.controller');
 const gatheringController = require('./controllers/gathering.controller');
 const orderController = require('./controllers/order.controller');
+const searchController = require('./controllers/search.controller');
 
 router.post('/login', loginController.login);
 router.get('/logout', authController.isLogged, loginController.logout);
@@ -39,5 +40,7 @@ router.delete('/gathering', authController.isLeader, gatheringController.deleteG
 router.get('/order', authController.isLogged, orderController.getOrder);
 router.post('/order', authController.isLogged, orderController.createOrder);
 router.put('/order', authController.isLogged, orderController.updateOrder);
+
+router.get('/search/transaction', authController.isLeader, searchController.searchTransaction);
 
 module.exports = router;
