@@ -23,8 +23,8 @@ class AccountModel {
             'SELECT * ' +
             'FROM ACCOUNT ac ' +
             `${where}` +
-            `ORDER BY username ASC LIMIT ${(page - 1) * 10}, 10`;
-        const [rows] = await pool.query(sql, Object.values(param));
+            `ORDER BY username ASC LIMIT ?, 10`;
+        const [rows] = await pool.query(sql, [ ...Object.values(param), (page - 1) * 10 ]);
         return rows;
     }
 

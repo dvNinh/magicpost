@@ -46,7 +46,7 @@ class LoginController {
     getRole(req, res, next) {
         res.status(200).json({
             username: req.session.user.username,
-            fullName: req.session.user.fullName,
+            fullName: req.session.user.full_name,
             role: req.session.user.role
         });
     }

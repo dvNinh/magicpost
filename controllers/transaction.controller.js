@@ -68,7 +68,7 @@ class TransactionController {
                 coordinatesX: transaction.CoordinateX,
                 coordinatesY: transaction.CoordinateY,
                 manager: transaction.Manager,
-                gatheringId: gathering.gatheringId
+                gatheringId: transaction.gatheringId
             });
         }
         res.status(200).json(transactionList);
@@ -81,8 +81,10 @@ class TransactionController {
             return;
         }
         let newTransactionId = 'GD' + String(parseInt(lastTransactionId.substring(2)) + 1).padStart(4, '0');
+
         const param = {};
         param.TransactionAreaID = newTransactionId;
+
         req.body.name ? param.TransactionAreaNAME = req.body.name : null;
         if (req.body.city) {
             const city = await cityModel.getCityById(req.body.city);
@@ -92,6 +94,7 @@ class TransactionController {
             }
             param.CityID = city.id;
         }
+
         if (req.body.district) {
             const district = await districtModel.getDistrictById(req.body.district);
             if (!district) {
@@ -100,9 +103,11 @@ class TransactionController {
             }
             param.DistrictID = district.id;
         }
+
         req.body.address ? param.Address = req.body.address : null;
         req.body.coordinatesX ? param.CoordinateX = req.body.coordinatesX : null;
         req.body.coordinatesY ? param.CoordinateY = req.body.coordinatesY : null;
+
         if (req.body.manager) {
             const manager = await accountModel.getAccountByUsername(req.body.manager);
             if (!manager || manager.role != 'dean_tran') {
@@ -120,6 +125,15 @@ class TransactionController {
                 { transaction: newTransactionId },
                 { username: manager.username }
             );
+        }
+
+        if (req.body.gatheringId) {
+            const gathering = await gatheringModel.getGatheringById(req.body.gatheringId);
+            if (!gathering) {
+                res.status(400).json({ message: 'gathering id unknown' });
+                return;
+            }
+            param.gatheringId = req.body.gatheringId
         }
 
         await transactionModel.createTransaction(param);

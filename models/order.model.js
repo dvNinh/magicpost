@@ -23,8 +23,8 @@ class OrderModel {
             'SELECT * ' +
             'FROM `ORDER` ' +
             `${where}` +
-            `ORDER BY id ASC LIMIT ${(page - 1) * 10}, 10`;
-        const [rows] = await pool.query(sql, Object.values(param));
+            `ORDER BY id ASC LIMIT ?, 10`;
+        const [rows] = await pool.query(sql, [ ...Object.values(param), (page - 1) * 10 ]);
         return rows;
     }
 
