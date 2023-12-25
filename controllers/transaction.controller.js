@@ -116,7 +116,7 @@ class TransactionController {
             }
             if (manager.transaction) {
                 await transactionModel.updateTransaction(
-                    { manager: null },
+                    { Manager: null },
                     { TransactionAreaID: manager.transaction }
                 );
             }
@@ -183,7 +183,7 @@ class TransactionController {
             }
             if (manager.transaction) {
                 await transactionModel.updateTransaction(
-                    { manager: null },
+                    { Manager: null },
                     { TransactionAreaID: manager.transaction }
                 );
             }
@@ -192,6 +192,15 @@ class TransactionController {
                 { transaction: req.query.id },
                 { username: manager.username }
             );
+        }
+
+        if (req.body.gatheringId) {
+            const gathering = await gatheringModel.getGatheringById(req.body.gatheringId);
+            if (!gathering) {
+                res.status(400).json({ message: 'gathering id unknown' });
+                return;
+            }
+            update.gatheringId = req.body.gatheringId
         }
 
         if (Object.keys(update).length == 0) {

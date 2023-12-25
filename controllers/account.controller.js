@@ -72,31 +72,48 @@ class AccountController {
             if (req.body.transaction) {
                 param.transaction = req.body.transaction;
                 if (req.body.role == 'dean_tran') {
-                    if (!/^GD\d{4}$/.test(param.transaction)) {
+                    if (!/^GD\d{4}$/.test(req.body.transaction)) {
                         res.status(400).json({ message: 'invalid transaction for dean_tran role' });
                         return;
                     }
+                    const transaction = await transactionModel.getTransactionById(req.body.transaction);
+                    if (!transaction) {
+                        res.status(400).json({ message: 'transaction unknown' });
+                        return;
+                    }
+                    if (transaction.Manager) {
+                        await accountModel.updateAccount(
+                            { transaction: null },
+                            { username: transaction.Manager }
+                        );
+                    }
+                    param.transaction = req.body.transaction
+                    await transactionModel.updateTransaction(
+                        { Manager: param.username },
+                        { TransactionAreaID: transaction.TransactionAreaID }
+                    );
                 } else {
-                    if (!/^TK\d{4}$/.test(param.transaction)) {
+                    if (!/^TK\d{4}$/.test(req.body.transaction)) {
                         res.status(400).json({ message: 'invalid transaction for dean_gather role' });
                         return;
                     }
-                }
-                const transaction = await transactionModel.getTransactionById(param.transaction);
-                if (!transaction) {
-                    res.status(400).json({ message: 'transaction unknown' });
-                    return;
-                }
-                if (transaction.Manager) {
-                    await accountModel.updateAccount(
-                        { transaction: null },
-                        { username: transaction.Manager }
+                    const gathering = await gatheringModel.getGatheringById(req.body.transaction);
+                    if (!gathering) {
+                        res.status(400).json({ message: 'transaction unknown' });
+                        return;
+                    }
+                    if (gathering.manager) {
+                        await accountModel.updateAccount(
+                            { transaction: null },
+                            { username: gathering.manager }
+                        );
+                    }
+                    param.transaction = req.body.transaction
+                    await gatheringModel.updateGathering(
+                        { manager: param.username },
+                        { id: gathering.id }
                     );
                 }
-                await transactionModel.updateTransaction(
-                    { manager: param.username },
-                    { TransactionAreaID: transaction.TransactionAreaID }
-                );
             }
         } else {
             if (!req.session.user.transaction) {
@@ -106,6 +123,8 @@ class AccountController {
             param.transaction = req.session.user.transaction;
             req.session.user.role = 'dean_tran' ? param.role = 'transacting' : param.role = 'gathering';
         }
+
+        req.body.fullName ? param.full_name = req.body.fullName : null;
 
         await accountModel.createAccount(param);
         res.status(201).json({ message: 'create account success' });
@@ -119,11 +138,14 @@ class AccountController {
                 res.status(400).json({ message: 'password is invalid' });
                 return;
             } else {
-                update.password = req.body.password;
+                const salt = bcrypt.genSaltSync(saltRounds);
+                const hash = bcrypt.hashSync(req.body.password, salt);
+                update.password = hash;
             }
         }
 
         if (req.session.user.role === 'leader') {
+            req.body.fullName ? update.full_name = req.body.fullName : null;
             if (req.body.transaction) {
                 if (!req.query.username) {
                     res.status(400).json({ message: 'account unknown' });
@@ -152,14 +174,14 @@ class AccountController {
                     }
                     update.transaction = req.body.transaction
                     await transactionModel.updateTransaction(
-                        { manager: account.username },
+                        { Manager: account.username },
                         { TransactionAreaID: transaction.TransactionAreaID }
                     );
 
                     const oldTransaction = await transactionModel.getTransactionByManager(account.username);
                     if (oldTransaction) {
                         await transactionModel.updateTransaction(
-                            { manager: null },
+                            { Manager: null },
                             { TransactionAreaID: oldTransaction.TransactionAreaID }
                         );
                     }
@@ -207,6 +229,7 @@ class AccountController {
             condition.username = req.session.user.username;
         } else {
             req.query.username ? condition.username = req.query.username : null;
+            req.query.fullName ? condition.full_name = req.query.fullName : null;
             if (req.session.user.role !== 'leader') condition.transaction = req.session.user.transaction;
         }
 

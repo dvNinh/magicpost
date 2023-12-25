@@ -21,7 +21,7 @@ class GatheringController {
         req.query.name ? param.name = req.query.name : null;
 
         if (req.query.city) {
-            const city = await cityModel.getCityById(req.querycity);
+            const city = await cityModel.getCityById(req.query.city);
             if (!city) {
                 res.status(400).json({ message: 'city id unknown' });
                 return;

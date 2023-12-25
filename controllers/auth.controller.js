@@ -31,6 +31,25 @@ class AuthController {
         else if (req.session.user.role === 'dean_gather') next();
         else res.status(403).json({ message: 'access is not allowed' });
     }
+
+    onlyTransacting(req, res, next) {
+        if (!req.session.user) res.status(401).json({ message: 'unlogged' });
+        else if (req.session.user.role === 'transacting') next();
+        else res.status(403).json({ message: 'access is not allowed' });
+    }
+
+    onlyGathering(req, res, next) {
+        if (!req.session.user) res.status(401).json({ message: 'unlogged' });
+        else if (req.session.user.role === 'gathering') next();
+        else res.status(403).json({ message: 'access is not allowed' });
+    }
+
+    onlyStaff(req, res, next) {
+        if (!req.session.user) res.status(401).json({ message: 'unlogged' });
+        else if (req.session.user.role === 'transacting') next();
+        else if (req.session.user.role === 'gathering') next();
+        else res.status(403).json({ message: 'access is not allowed' });
+    }
 }
 
 module.exports = new AuthController;

@@ -1,27 +1,16 @@
 var pool = require('../config/db');
 
-class OrderModel {
-    async getOrderById(id) {
+class OrderStatusModel {
+    async getOrderStatusById(id) {
         var sql = 
             'SELECT * ' +
-            'FROM `ORDER` ' +
-            'WHERE id = ?';
+            'FROM ORDER_STATUS ' +
+            'WHERE order_id = ?';
         const [rows] = await pool.query(sql, [id]);
         return rows[0];
     }
 
-    async getLastOrderId(day) {
-        let sql =
-            'SELECT id ' +
-            'FROM `ORDER` ' +
-            `WHERE id LIKE "DH${day}______" ` +
-            'ORDER BY id DESC LIMIT 1';
-        const [rows] = await pool.query(sql);
-        if (!rows[0]) return `DH${day}000000`;
-        return rows[0].id;
-    }
-
-    async getOrder(param, page) {
+    async getOrderStatus(param, page) {
         let where = '';
         if (Object.keys(param).length > 0) {
             where = 'WHERE ';
@@ -32,20 +21,20 @@ class OrderModel {
         }
         var sql = 
             'SELECT * ' +
-            'FROM `ORDER` ' +
+            'FROM ORDER_STATUS ' +
             `${where}` +
-            `ORDER BY id ASC LIMIT ?, 10`;
+            `ORDER BY order_id ASC LIMIT ?, 10`;
         const [rows] = await pool.query(sql, [ ...Object.values(param), (page - 1) * 10 ]);
         return rows;
     }
 
-    async createOrder(param) {
-        var sql = 'INSERT INTO `ORDER` SET ?';
+    async createOrderStatus(param) {
+        var sql = 'INSERT INTO ORDER_STATUS SET ?';
         const [results] = await pool.query(sql, param);
         return results;
     }
 
-    async updateOrder(update, condition) {
+    async updateOrderStatus(update, condition) {
         let where = '';
         if (Object.keys(condition).length > 0) {
             where = 'WHERE ';
@@ -54,10 +43,10 @@ class OrderModel {
             }
             where = where.slice(0, -5);
         }
-        var sql = `UPDATE \`ORDER\` SET ? ${where}`;
+        var sql = `UPDATE ORDER_STATUS SET ? ${where}`;
         const [results] = await pool.query(sql, [update, ...Object.values(condition)]);
         return results;
     }
 }
 
-module.exports = new OrderModel;
+module.exports = new OrderStatusModel;

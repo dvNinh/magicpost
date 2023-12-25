@@ -1,12 +1,14 @@
 const transactionModel = require('../models/transaction.model');
+const gatheringModel = require('../models/gathering.model');
 const cityModel = require('../models/city.model');
 const districtModel = require('../models/district.model');
+const orderStatusModel = require('../models/orderStatus.model');
 
 class SearchController {
     async searchTransaction(req, res, next) {
         const searchValue = req.query.searchValue ? req.query.searchValue : '';
-        const page = req.query.page ? req.query.page : 1;
-        const limit = req.query.limit ? req.query.limit : 10;
+        const page = !!parseInt(req.query.page) ? parseInt(req.query.page) : 1;
+        const limit = !!parseInt(req.query.limit) ? parseInt(req.query.limit) : 10;
         const sortOrder = req.query.sortOrder ? req.query.sortOrder : 'ascending';
 
         const param = {};
@@ -43,7 +45,7 @@ class SearchController {
                 coordinatesX: transaction.CoordinateX,
                 coordinatesY: transaction.CoordinateY,
                 manager: transaction.Manager,
-                gatheringId: gathering.gatheringId
+                gatheringId: transaction.gatheringId
             });
         }
         res.status(200).json(transactionList);
@@ -51,8 +53,8 @@ class SearchController {
 
     async searchGathering(req, res, next) {
         const searchValue = req.query.searchValue ? req.query.searchValue : '';
-        const page = req.query.page ? req.query.page : 1;
-        const limit = req.query.limit ? req.query.limit : 10;
+        const page = !!parseInt(req.query.page) ? parseInt(req.query.page) : 1;
+        const limit = !!parseInt(req.query.limit) ? parseInt(req.query.limit) : 10;
         const sortOrder = req.query.sortOrder ? req.query.sortOrder : 'ascending';
         
         const param = {};
@@ -75,7 +77,7 @@ class SearchController {
             param.DistrictID = district.id;
         }
 
-        const gatherings = await transactionModel.searchTransaction(searchValue, param, page, limit, sortOrder);
+        const gatherings = await gatheringModel.searchGathering(searchValue, param, page, limit, sortOrder);
         let gatheringList = [];
         for (let gathering of gatherings) {
             gatheringList.push({
@@ -92,6 +94,38 @@ class SearchController {
             });
         }
         res.status(200).json(gatheringList);
+    }
+
+    async searchOrder(req, res, next) {
+        if (!req.query.id) {
+            res.status(400).json({ message: 'order id is required' });
+            return;
+        }
+        const id = req.query.id;
+
+        const order = await orderStatusModel.getOrderStatusById(id);
+        if (!order) {
+            res.status(404).json({ message: 'order not found' });
+            return;
+        }
+        res.status(200).json({
+            id: order.order_id,
+            timeSendTrans1: order.time_send_trans1,
+	        timeSendGather1: order.time_send_gather1,
+	        timeSendGather2: order.time_send_gather2,
+	        timeSendTrans2: order.time_send_trans2,
+	        timeShip: order.time_ship,
+	        timeReceive: order.time_receive,
+	        timeReturnTrans1: order.time_return_trans1,
+	        timeReturnGather1: order.time_return_gather1,
+	        timeReturnGather2: order.time_return_gather2,
+	        timeReturnTrans2: order.time_return_trans2,
+	        timeShipBack: order.time_ship_back,
+	        timeReceiveBack: order.time_receive_back,
+	        timeDestroy: order.time_destroy,
+	        currentStatus: order.current_status,
+	        currentPosition: order.current_position
+        });
     }
 }
 

@@ -1,94 +1,108 @@
 const orderModel = require('../models/order.model');
-
-const pool = require('../config/db');
+const orderStatusModel = require('../models/orderStatus.model');
 
 class OrderController {
     async getOrder(req, res, next) {
-        if (req.query.id) {
-            const order = await orderModel.getOrderById(req.query.id);
-            res.status(200).json(order);
-        } else {
-            const param = {};
-            req.query.senderId ? param.SenderID = req.query.senderId : null;
-            req.query.receiverId ? param.ReceiverID = req.query.receiverId : null;
-            req.query.senderTransactionAreaID ? param.SenderTransactionAreaID = req.query.senderTransactionAreaID : null;
-            req.query.receiverTransactionAreaID ? param.ReceiverTransactionAreaID = req.query.receiverTransactionAreaID : null;
-            req.query.arriveAt ? param.ArriveAt = req.query.arriveAt : null;
-            req.query.orderType ? param.OrderType = req.query.orderType : null;
-            req.query.orderInfo ? param.OrderInfo = req.query.orderInfo : null;
-            req.query.price ? param.Price = req.query.price : null;
-            req.query.attachedFile ? param.AttachedFile = req.query.attachedFile : null;
-            req.query.weight ? param.Weight = req.query.weight : null;
-            req.query.shippingCost ? param.ShippingCost = req.query.shippingCost : null;
-            req.query.othersCost ? param.OthersCost = req.query.othersCost : null;
-            req.query.notes ? param.Notes = req.query.notes : null;
-            const page = req.query.page ? req.query.page : 1;
-            const orders = await orderModel.getOrder(param, page);
-            console.log(orders);
-            let orderList = [];
-            for (let order of orders) {
-                orderList.push({
-                    id: order.id,
-                    senderId: order.SenderID,
-                    receiverId: order.ReceiverID,
-                    senderTransactionAreaID: order.SenderTransactionAreaID,
-                    receiverTransactionAreaID: order.ReceiverTransactionAreaID,
-                    arriveAt: order.ArriveAt,
-                    orderType: order.OrderType,
-                    orderInfo: order.OrderInfo,
-                    price: order.Price,
-                    attachedFile: order.AttachedFile,
-                    weight: order.Weight,
-                    shippingCost: order.ShippingCost,
-                    othersCost: order.OthersCost,
-                    notes: order.Notes
-                });
-            }
-            res.status(200).json(orderList);
+        const param = {};
+
+        req.query.id? param.id = req.query.id : null;
+        req.query.sender ? param.SenderID = req.query.sender : null;
+        req.query.receiver ? param.ReceiverID = req.query.receiver : null;
+        req.query.senderTransactionId ? param.SenderTransactionId = req.query.senderTransactionId : null;
+        req.query.receiverTransactionId ? param.ReceiverTransactionId = req.query.receiverTransactionId : null;
+        req.query.arriveAt ? param.ArriveAt = req.query.arriveAt : null;
+        req.query.orderType ? param.OrderType = req.query.orderType : null;
+        req.query.orderInfo ? param.OrderInfo = req.query.orderInfo : null;
+        req.query.price ? param.Price = req.query.price : null;
+        req.query.attachedFile ? param.AttachedFile = req.query.attachedFile : null;
+        req.query.weight ? param.Weight = req.query.weight : null;
+        req.query.shippingCost ? param.ShippingCost = req.query.shippingCost : null;
+        req.query.othersCost ? param.OthersCost = req.query.othersCost : null;
+        req.query.notes ? param.Notes = req.query.notes : null;
+
+        const page = req.query.page ? req.query.page : 1;
+        const orders = await orderModel.getOrder(param, page);
+
+        let orderList = [];
+        for (let order of orders) {
+            orderList.push({
+                id: order.id,
+                sender: order.SenderID,
+                receiver: order.ReceiverID,
+                senderTransactionId: order.SenderTransactionAreaID,
+                receiverTransactionId: order.ReceiverTransactionAreaID,
+                arriveAt: order.ArriveAt,
+                orderType: order.OrderType,
+                orderInfo: order.OrderInfo,
+                price: order.Price,
+                attachedFile: order.AttachedFile,
+                weight: order.Weight,
+                shippingCost: order.ShippingCost,
+                othersCost: order.OthersCost,
+                notes: order.Notes
+            });
         }
+        res.status(200).json(orderList);
     }
 
     async createOrder(req, res, next) {
         let date = new Date();
         let today = `${date.getFullYear()}${date.getMonth() + 1}${date.getDate()}`.substring(2);
-        let sql =
-            'SELECT id ' +
-            'FROM `ORDER` ' +
-            `WHERE id LIKE "DH${today}______" ` +
-            'ORDER BY id DESC LIMIT 1';
-        const lastOrder = await pool.query(sql);
-        let lastOrderId = lastOrder[0][0] ? lastOrder[0][0]['id'] : `DH${today}000000`;
+        let now = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+
+        const lastOrderId = await orderModel.getLastOrderId(today);
         if (lastOrderId === `DH${today}999999`) {
             res.status(201).json({ message: 'da tao toi da don hang' });
-        } else {
-            let newOderId = 'DH' + String(parseInt(lastOrderId.substring(2)) + 1).padStart(6, '0');
-            const param = {};
-            param.id = newOderId;
-            req.body.senderId ? param.SenderID = req.body.senderId : null;
-            req.body.receiverId ? param.ReceiverID = req.body.receiverId : null;
-            req.body.senderTransactionAreaID ? param.SenderTransactionAreaID = req.body.senderTransactionAreaID : null;
-            req.body.receiverTransactionAreaID ? param.ReceiverTransactionAreaID = req.body.receiverTransactionAreaID : null;
-            req.body.arriveAt ? param.ArriveAt = req.body.arriveAt : null;
-            req.body.orderType ? param.OrderType = req.body.orderType : null;
-            req.body.orderInfo ? param.OrderInfo = req.body.orderInfo : null;
-            req.body.price ? param.Price = req.body.price : null;
-            req.body.attachedFile ? param.AttachedFile = req.body.attachedFile : null;
-            req.body.weight ? param.Weight = req.body.weight : null;
-            req.body.shippingCost ? param.ShippingCost = req.body.shippingCost : null;
-            req.body.othersCost ? param.OthersCost = req.body.othersCost : null;
-            req.body.notes ? param.Notes = req.body.notes : null;
-            await orderModel.createOrder(param);
-            res.status(201).json({ message: 'Success' });
+            return;
         }
+        let newOderId = `DH${today}` + String(parseInt(lastOrderId.substring(8)) + 1).padStart(6, '0');
+
+        const param = {};
+
+        param.id = newOderId;
+        req.body.sender ? param.SenderID = req.body.sender : null;
+        req.body.receiver ? param.ReceiverID = req.body.receiver : null;
+
+        if (!req.body.senderTransactionId) {
+            res.status(400).json({ message: 'sender transaction is required' });
+            return;
+        }
+        param.SenderTransactionAreaID = req.body.senderTransactionId;
+
+        if (!req.body.receiverTransactionId) {
+            res.status(400).json({ message: 'receiver transaction is required' });
+            return;
+        }
+        param.ReceiverTransactionAreaID = req.body.receiverTransactionId;
+        
+        param.ArriveAt = now;
+        req.body.orderType ? param.OrderType = req.body.orderType : null;
+        req.body.orderInfo ? param.OrderInfo = req.body.orderInfo : null;
+        req.body.price ? param.Price = req.body.price : null;
+        req.body.attachedFile ? param.AttachedFile = req.body.attachedFile : null;
+        req.body.weight ? param.Weight = req.body.weight : null;
+        req.body.shippingCost ? param.ShippingCost = req.body.shippingCost : null;
+        req.body.othersCost ? param.OthersCost = req.body.othersCost : null;
+        req.body.notes ? param.Notes = req.body.notes : null;
+
+        await orderModel.createOrder(param);
+        await orderStatusModel.createOrderStatus({
+            order_id: newOderId,
+            time_send_trans1: now,
+            current_status: 'send',
+            current_position: req.body.senderTransactionId
+        });
+
+        res.status(201).json({ message: 'Success' });
     }
 
     async updateOrder(req, res, next) {
         const update = {};
-        req.body.senderId ? update.SenderID = req.body.senderId : null;
-        req.body.receiverId ? update.ReceiverID = req.body.receiverId : null;
-        req.body.senderTransactionAreaID ? update.SenderTransactionAreaID = req.body.senderTransactionAreaID : null;
-        req.body.receiverTransactionAreaID ? update.ReceiverTransactionAreaID = req.body.receiverTransactionAreaID : null;
-        req.body.arriveAt ? update.ArriveAt = req.body.arriveAt : null;
+
+        req.body.sender ? update.SenderID = req.body.sender : null;
+        req.body.receiver ? update.ReceiverID = req.body.receiver : null;
+        // req.body.senderTransactionId ? update.SenderTransactionAreaID = req.body.senderTransactionId : null;
+        // req.body.receiverTransactionId ? update.ReceiverTransactionAreaID = req.body.receiverTransactionId : null;
         req.body.orderType ? update.OrderType = req.body.orderType : null;
         req.body.orderInfo ? update.OrderInfo = req.body.orderInfo : null;
         req.body.price ? update.Price = req.body.price : null;
@@ -97,12 +111,14 @@ class OrderController {
         req.body.shippingCost ? update.ShippingCost = req.body.shippingCost : null;
         req.body.othersCost ? update.OthersCost = req.body.othersCost : null;
         req.body.notes ? update.Notes = req.body.notes : null;
+
         const condition = {};
+
         req.query.id ? condition.id = req.query.id : null;
-        req.query.senderId ? condition.SenderID = req.query.senderId : null;
-        req.query.receiverId ? condition.ReceiverID = req.query.receiverId : null;
-        req.query.senderTransactionAreaID ? condition.SenderTransactionAreaID = req.query.senderTransactionAreaID : null;
-        req.query.receiverTransactionAreaID ? condition.ReceiverTransactionAreaID = req.query.receiverTransactionAreaID : null;
+        req.query.sender ? condition.SenderID = req.query.sender : null;
+        req.query.receiver ? condition.ReceiverID = req.query.receiver : null;
+        req.query.senderTransactionId ? condition.SenderTransactionAreaID = req.query.senderTransactionId : null;
+        req.query.receiverTransactionId ? condition.ReceiverTransactionAreaID = req.query.receiverTransactionId : null;
         req.query.arriveAt ? condition.ArriveAt = req.query.arriveAt : null;
         req.query.orderType ? condition.OrderType = req.query.orderType : null;
         req.query.orderInfo ? condition.OrderInfo = req.query.orderInfo : null;
@@ -112,6 +128,7 @@ class OrderController {
         req.query.shippingCost ? condition.ShippingCost = req.query.shippingCost : null;
         req.query.othersCost ? condition.OthersCost = req.query.othersCost : null;
         req.query.notes ? condition.Notes = req.query.notes : null;
+
         await orderModel.updateOrder(update, condition);
         res.status(201).json({ message: 'Success' });
     }
