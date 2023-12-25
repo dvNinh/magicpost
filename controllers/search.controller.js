@@ -43,6 +43,7 @@ class SearchController {
                 coordinatesX: transaction.CoordinateX,
                 coordinatesY: transaction.CoordinateY,
                 manager: transaction.Manager,
+                gatheringId: gathering.gatheringId
             });
         }
         res.status(200).json(transactionList);
@@ -88,7 +89,6 @@ class SearchController {
                 coordinatesX: gathering.coordinateX,
                 coordinatesY: gathering.coordinateY,
                 manager: gathering.manager,
-                transactionId: gathering.transactionId
             });
         }
         res.status(200).json(gatheringList);

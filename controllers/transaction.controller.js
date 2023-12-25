@@ -1,5 +1,6 @@
 const accountModel = require('../models/account.model');
 const transactionModel = require('../models/transaction.model');
+const gatheringModel = require('../models/gathering.model');
 const cityModel = require('../models/city.model');
 const districtModel = require('../models/district.model');
 
@@ -42,8 +43,17 @@ class TransactionController {
         req.query.coordinatesX ? param.CoordinateX = req.query.coordinatesX : null;
         req.query.coordinatesY ? param.CoordinateY = req.query.coordinatesY : null;
         req.query.manager ? param.Manager = req.query.manager : null;
-        const page = req.query.page ? req.query.page : 1;
+        
+        if (req.query.gatheringId) {
+            const gathering = await gatheringModel.getGatheringById(req.query.gatheringId);
+            if (!gathering) {
+                res.status(400).json({ message: 'gathering id unknown' });
+                return;
+            }
+            param.gatheringId = req.query.gatheringId
+        }
 
+        const page = req.query.page ? req.query.page : 1;
         const transactions = await transactionModel.getTransaction(param, page);
         let transactionList = [];
         for (let transaction of transactions) {
@@ -58,6 +68,7 @@ class TransactionController {
                 coordinatesX: transaction.CoordinateX,
                 coordinatesY: transaction.CoordinateY,
                 manager: transaction.Manager,
+                gatheringId: gathering.gatheringId
             });
         }
         res.status(200).json(transactionList);
