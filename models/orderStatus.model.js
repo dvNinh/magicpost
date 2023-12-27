@@ -23,7 +23,7 @@ class OrderStatusModel {
             'SELECT * ' +
             'FROM ORDER_STATUS ' +
             `${where}` +
-            `ORDER BY order_id ASC LIMIT ?, 10`;
+            `ORDER BY last_update DESC LIMIT ?, 10`;
         const [rows] = await pool.query(sql, [ ...Object.values(param), (page - 1) * 10 ]);
         return rows;
     }

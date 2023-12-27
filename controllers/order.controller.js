@@ -34,7 +34,7 @@ class OrderController {
                 arriveAt: order.ArriveAt,
                 orderType: order.OrderType,
                 orderInfo: order.OrderInfo,
-                price: order.Price,
+                price: JSON.parse(order.Price),
                 attachedFile: order.AttachedFile,
                 weight: order.Weight,
                 shippingCost: order.ShippingCost,
@@ -75,14 +75,33 @@ class OrderController {
         }
         param.ReceiverTransactionAreaID = req.body.receiverTransactionId;
         
+        if (!req.body.weight) {
+            res.status(400).json({ message: 'weight is required' });
+            return;
+        }
+        param.Weight = req.body.weight;
+
         param.ArriveAt = now;
         req.body.orderType ? param.OrderType = req.body.orderType : null;
         req.body.orderInfo ? param.OrderInfo = req.body.orderInfo : null;
-        req.body.price ? param.Price = req.body.price : null;
-        req.body.attachedFile ? param.AttachedFile = req.body.attachedFile : null;
-        req.body.weight ? param.Weight = req.body.weight : null;
-        req.body.shippingCost ? param.ShippingCost = req.body.shippingCost : null;
+
+        price = {};
+        if (req.body.senderTransactionId == req.body.receiverTransactionId) {
+            if (req.body.weight <= 1000) price.mainCharge = 10000
+            else price.mainCharge = 10000 + (req.body.weight - 1000) * 2
+        } else {
+            if (req.body.weight <= 1000) price.mainCharge = 13000
+            else price.mainCharge = 13000 + (req.body.weight - 1000) * 3
+        }
+        price.surcharge = price.mainCharge * 10 / 100;
+        price.vat = (price.mainCharge + price.surcharge) * 10 / 100;
+        price.total = price.mainCharge + price.surcharge + price.vat;
+
+        param.Price = JSON.stringify(price);
+        param.ShippingCost = 15000;
         req.body.othersCost ? param.OthersCost = req.body.othersCost : null;
+
+        req.body.attachedFile ? param.AttachedFile = req.body.attachedFile : null;
         req.body.notes ? param.Notes = req.body.notes : null;
 
         await orderModel.createOrder(param);
@@ -93,7 +112,9 @@ class OrderController {
             current_position: req.body.senderTransactionId
         });
 
-        res.status(201).json({ message: 'Success' });
+        const order = await orderModel.getOrderById(newOderId);
+
+        res.status(201).json(order);
     }
 
     async updateOrder(req, res, next) {

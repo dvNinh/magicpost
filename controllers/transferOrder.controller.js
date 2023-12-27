@@ -17,8 +17,8 @@ class TransferOrderController {
                 sendTime: order.send_time,
                 departureId: order.departure_id,
                 destinationId: order.destination_id,
-                currentStatus: order.current_status,
-                type: order.type
+                type: order.type,
+                action: [ `/order/acceptOrder/${order.order_id}` ]
             });
         }
         res.status(200).json(orderList);
@@ -30,11 +30,11 @@ class TransferOrderController {
 
         const param = {};
 
-        if (!req.body.orderId) {
+        if (!req.param.orderId) {
             res.status(400).json({ message: 'order id is required' });
             return;
         }
-        param.order_id = req.body.orderId;
+        param.order_id = req.param.orderId;
 
         const orderStatus = await orderStatusModel.getOrderStatusById(param.order_id);
         if (orderStatus.current_status == 'received') {
@@ -55,7 +55,7 @@ class TransferOrderController {
             res.status(400).json({ message: 'destination id is required' });
             return;
         }
-        param.destination_id = req.body.destinationId;
+        param.destination_id = req.param.destinationId;
         param.send_time = now;
         param.current_status = "arriving";
 
@@ -68,11 +68,11 @@ class TransferOrderController {
         let date = new Date();
         let now = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
 
-        if (!req.body.orderId) {
+        if (!req.param.orderId) {
             res.status(400).json({ message: 'order id is required' });
             return;
         }
-        const id = req.body.orderId;
+        const id = req.param.orderId;
         const userTransaction = req.session.user.transaction;
 
         const update = {};
@@ -95,14 +95,16 @@ class TransferOrderController {
             return;
         } else if (orderType == 'send') {
             if (userTransaction == senderTransaction) update.time_send_trans1 = now;
-            else if (userTransaction == senderGathering) update.time_send_gather1 = now;
-            else if (userTransaction == receiverGathering) update.time_send_gather2 = now;
-            else update.time_send_trans2 = now;
+            if (userTransaction == senderGathering) update.time_send_gather1 = now;
+            if (userTransaction == receiverGathering) update.time_send_gather2 = now;
+            if (userTransaction == receiverTransaction) update.time_send_trans2 = now;
+            update.last_update = now;
         } else if (orderType == 'return') {
             if (userTransaction == senderTransaction) update.time_return_trans1 = now;
-            else if (userTransaction == senderGathering) update.time_return_gather1 = now;
-            else if (userTransaction == receiverGathering) update.time_return_gather2 = now;
-            else update.time_return_trans2 = now;
+            if (userTransaction == senderGathering) update.time_return_gather1 = now;
+            if (userTransaction == receiverGathering) update.time_return_gather2 = now;
+            if (userTransaction == receiverTransaction) update.time_return_trans2 = now;
+            update.last_update = now;
         }
 
         await orderStatusModel.updateOrderStatus(update, { order_id: id })

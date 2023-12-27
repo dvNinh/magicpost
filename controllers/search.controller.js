@@ -3,6 +3,7 @@ const gatheringModel = require('../models/gathering.model');
 const cityModel = require('../models/city.model');
 const districtModel = require('../models/district.model');
 const orderStatusModel = require('../models/orderStatus.model');
+const orderStatusController = require('./orderStatus.controller');
 
 class SearchController {
     async searchTransaction(req, res, next) {
@@ -34,7 +35,7 @@ class SearchController {
         const transactions = await transactionModel.searchTransaction(searchValue, param, page, limit, sortOrder);
         let transactionList = [];
         for (let transaction of transactions) {
-            transactionList.push({
+            let tran = {
                 id: transaction.TransactionAreaID,
                 name: transaction.TransactionAreaNAME,
                 city: transaction.CityName,
@@ -44,9 +45,12 @@ class SearchController {
                 address: transaction.Address,
                 coordinatesX: transaction.CoordinateX,
                 coordinatesY: transaction.CoordinateY,
-                manager: transaction.Manager,
                 gatheringId: transaction.gatheringId
-            });
+            };
+            if (req.session.user.role == 'leader') {
+                tran.manager = transaction.Manager;
+            }
+            transactionList.push(tran);
         }
         res.status(200).json(transactionList);
     }
@@ -80,7 +84,7 @@ class SearchController {
         const gatherings = await gatheringModel.searchGathering(searchValue, param, page, limit, sortOrder);
         let gatheringList = [];
         for (let gathering of gatherings) {
-            gatheringList.push({
+            let gather = {
                 id: gathering.id,
                 name: gathering.name,
                 city: gathering.CityName,
@@ -90,8 +94,11 @@ class SearchController {
                 address: gathering.address,
                 coordinatesX: gathering.coordinateX,
                 coordinatesY: gathering.coordinateY,
-                manager: gathering.manager,
-            });
+            };
+            if (req.session.user.role == 'leader') {
+                gather.manager = gathering.manager;
+            }
+            gatheringList.push(gather);
         }
         res.status(200).json(gatheringList);
     }
@@ -108,23 +115,10 @@ class SearchController {
             res.status(404).json({ message: 'order not found' });
             return;
         }
+        const orderStatus = await orderStatusModel.getOrderStatusById(id);
         res.status(200).json({
-            id: order.order_id,
-            timeSendTrans1: order.time_send_trans1,
-	        timeSendGather1: order.time_send_gather1,
-	        timeSendGather2: order.time_send_gather2,
-	        timeSendTrans2: order.time_send_trans2,
-	        timeShip: order.time_ship,
-	        timeReceive: order.time_receive,
-	        timeReturnTrans1: order.time_return_trans1,
-	        timeReturnGather1: order.time_return_gather1,
-	        timeReturnGather2: order.time_return_gather2,
-	        timeReturnTrans2: order.time_return_trans2,
-	        timeShipBack: order.time_ship_back,
-	        timeReceiveBack: order.time_receive_back,
-	        timeDestroy: order.time_destroy,
-	        currentStatus: order.current_status,
-	        currentPosition: order.current_position
+            order,
+            status: orderStatusController.getOrderStatus(orderStatus)
         });
     }
 }

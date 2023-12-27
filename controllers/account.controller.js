@@ -12,9 +12,25 @@ class AccountController {
         const param = {};
         req.query.username ? param.username = req.query.username : null;
         req.query.fullName ? param.full_name = req.query.fullName : null;
-        req.query.role ? param.role = req.query.role : null;
-        if (req.session.user.role === 'leader') req.query.transaction ? param.transaction = req.query.transaction : null;
-        else param.transaction = req.session.user.transaction;
+        if (req.session.user.role == 'leader') {
+            req.query.transaction ? param.transaction = req.query.transaction : null;
+            req.query.role ? param.role = req.query.role : null;
+        } else if (req.session.user.role == 'dean_tran') {
+            if (!req.session.user.transaction) {
+                res.status(400).json({ message: 'access is not allowed' });
+                return;
+            }
+            param.transaction = req.session.user.transaction;
+            param.role = 'transacting';
+        } else if (req.session.user.role == 'dean_gather') {
+            if (!req.session.user.transaction) {
+                res.status(400).json({ message: 'access is not allowed' });
+                return;
+            }
+            param.transaction = req.session.user.transaction;
+            param.role = 'gathering';
+        }
+
         const page = req.query.page ? req.query.page : 1;
 
         const accounts = await accountModel.getAccount(param, page);
@@ -121,7 +137,8 @@ class AccountController {
                 return;
             }
             param.transaction = req.session.user.transaction;
-            req.session.user.role = 'dean_tran' ? param.role = 'transacting' : param.role = 'gathering';
+            if (req.session.user.role == 'dean_tran') param.role = 'transacting';
+            else param.role = 'gathering';
         }
 
         req.body.fullName ? param.full_name = req.body.fullName : null;
@@ -238,13 +255,26 @@ class AccountController {
     }
 
     async deleteAccount(req, res, next) {
+        if (!req.query.username) {
+            res.status(400).json({ message: 'username is required' });
+            return;
+        }
+
         const param = {};
 
-        if (req.session.user.role !== 'leader') param.transaction = req.session.user.transaction;
-        else req.query.transaction ? param.transaction = req.query.transaction : null;
-        req.query.username ? param.username = req.query.username : null;
-        req.query.password ? param.password = req.query.password : null;
-        req.query.role ? param.role = req.query.role : null;
+        param.username = req.query.username;
+        if (req.session.user.role !== 'leader') {
+            param.transaction = req.session.user.transaction;
+        }
+        else {
+            const account = accountModel.getAccountByUsername(req.query.username);
+            if (account.role == 'dean_tran') {
+                transactionModel.updateTransaction({ manager: null }, { TransactionAreaID: account.transaction });
+            }
+            else if (account.role == 'dean_gather') {
+                gatheringModel.updateGathering({ manager: null }, { id: account.transaction });
+            }
+        }
 
         await accountModel.deleteAccount(param);
         res.status(200).json({ message: 'delete account success' });

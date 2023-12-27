@@ -47,20 +47,20 @@ router.get('/order', authController.isLogged, orderController.getOrder);
 router.post('/order', authController.isLogged, orderController.createOrder);
 router.put('/order', authController.isLogged, orderController.updateOrder);
 
-router.get('/order/getOrder', authController.onlyStaff, orderStatusController.getOrderOfTransaction);
-router.get('/order/getTransferOrder', authController.onlyStaff, transferOrderController.getTransferOrderOfTransaction);
-router.post('/order/sendOrder', authController.onlyStaff, transferOrderController.createTransferOrder);
-router.post('/order/acceptOrder', authController.onlyStaff, transferOrderController.acceptTransferOrder);
+router.get('/order/getOrder', authController.onlyStaff, orderStatusController.getOrderOfTransaction); // lay danh sach don hang da nhan
+router.get('/order/getTransferOrder', authController.onlyStaff, transferOrderController.getTransferOrderOfTransaction); // lay danh sach don hang cho tiep nhan
+router.post('/order/sendOrder/:id/:destination', authController.onlyStaff, transferOrderController.createTransferOrder);
+router.post('/order/acceptOrder/:id', authController.onlyStaff, transferOrderController.acceptTransferOrder);
 
-router.post('/order/ship', authController.onlyStaff, orderStatusController.shipOrder);
-router.post('/order/success', authController.onlyStaff, orderStatusController.successOrder);
-router.post('/order/fail', authController.onlyStaff, orderStatusController.failOrder);
-router.post('/order/shipBack', authController.onlyStaff, orderStatusController.shipBackOrder);
-router.post('/order/backSuccess', authController.onlyStaff, orderStatusController.receivedBackSuccessOrder);
-router.post('/order/backFail', authController.onlyStaff, orderStatusController.receivedBackFailOrder);
+router.post('/order/ship/:id', authController.onlyStaff, orderStatusController.shipOrder);
+router.post('/order/success/:id', authController.onlyStaff, orderStatusController.successOrder);
+router.post('/order/fail/:id', authController.onlyStaff, orderStatusController.failOrder);
+router.post('/order/shipBack/:id', authController.onlyStaff, orderStatusController.shipBackOrder);
+router.post('/order/backSuccess/:id', authController.onlyStaff, orderStatusController.receivedBackSuccessOrder);
+router.post('/order/backFail/:id', authController.onlyStaff, orderStatusController.receivedBackFailOrder);
 
-router.get('/search/transaction', authController.isLeader, searchController.searchTransaction);
-router.get('/search/gathering', authController.isLeader, searchController.searchGathering);
+router.get('/search/transaction', searchController.searchTransaction);
+router.get('/search/gathering', searchController.searchGathering);
 router.get('/search/order', searchController.searchOrder);
 
 module.exports = router;
