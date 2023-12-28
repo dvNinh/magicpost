@@ -1,6 +1,8 @@
 const orderModel = require('../models/order.model');
 const orderStatusModel = require('../models/orderStatus.model');
 
+const { randomString } = require('../utils/util');
+
 class OrderController {
     async getOrder(req, res, next) {
         const param = {};
@@ -50,12 +52,12 @@ class OrderController {
         let today = `${date.getFullYear()}${date.getMonth() + 1}${date.getDate()}`.substring(2);
         let now = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
 
-        const lastOrderId = await orderModel.getLastOrderId(today);
-        if (lastOrderId === `DH${today}999999`) {
-            res.status(201).json({ message: 'da tao toi da don hang' });
-            return;
+        let newOderId = '';
+        while (true) {
+            newOderId = `DH${today}${randomString(6)}`;
+            const oder = await orderModel.getOrderById(newOderId);
+            if (!oder) break;
         }
-        let newOderId = `DH${today}` + String(parseInt(lastOrderId.substring(8)) + 1).padStart(6, '0');
 
         const param = {};
 
@@ -63,11 +65,7 @@ class OrderController {
         req.body.sender ? param.SenderID = req.body.sender : null;
         req.body.receiver ? param.ReceiverID = req.body.receiver : null;
 
-        if (!req.body.senderTransactionId) {
-            res.status(400).json({ message: 'sender transaction is required' });
-            return;
-        }
-        param.SenderTransactionAreaID = req.body.senderTransactionId;
+        param.SenderTransactionAreaID = req.session.user.transaction;
 
         if (!req.body.receiverTransactionId) {
             res.status(400).json({ message: 'receiver transaction is required' });
@@ -85,7 +83,7 @@ class OrderController {
         req.body.orderType ? param.OrderType = req.body.orderType : null;
         req.body.orderInfo ? param.OrderInfo = req.body.orderInfo : null;
 
-        price = {};
+        let price = {};
         if (req.body.senderTransactionId == req.body.receiverTransactionId) {
             if (req.body.weight <= 1000) price.mainCharge = 10000
             else price.mainCharge = 10000 + (req.body.weight - 1000) * 2
@@ -108,13 +106,30 @@ class OrderController {
         await orderStatusModel.createOrderStatus({
             order_id: newOderId,
             time_send_trans1: now,
+            last_update: now,
             current_status: 'send',
-            current_position: req.body.senderTransactionId
+            current_position: req.session.user.transaction,
+            last_position: req.session.user.transaction
         });
 
         const order = await orderModel.getOrderById(newOderId);
 
-        res.status(201).json(order);
+        res.status(201).json({
+            id: order.id,
+            sender: order.SenderID,
+            receiver: order.ReceiverID,
+            senderTransactionId: order.SenderTransactionAreaID,
+            receiverTransactionId: order.ReceiverTransactionAreaID,
+            arriveAt: order.ArriveAt,
+            orderType: order.OrderType,
+            orderInfo: order.OrderInfo,
+            price: JSON.parse(order.Price),
+            attachedFile: order.AttachedFile,
+            weight: order.Weight,
+            shippingCost: order.ShippingCost,
+            othersCost: order.OthersCost,
+            notes: order.Notes
+        });
     }
 
     async updateOrder(req, res, next) {

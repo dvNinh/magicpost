@@ -44,7 +44,7 @@ router.put('/gathering', authController.isLeader, gatheringController.updateGath
 router.delete('/gathering', authController.isLeader, gatheringController.deleteGathering);
 
 router.get('/order', authController.isLogged, orderController.getOrder);
-router.post('/order', authController.isLogged, orderController.createOrder);
+router.post('/order', authController.onlyTransacting, orderController.createOrder);
 router.put('/order', authController.isLogged, orderController.updateOrder);
 
 router.get('/order/getOrder', authController.onlyStaff, orderStatusController.getOrderOfTransaction); // lay danh sach don hang da nhan

@@ -10,17 +10,6 @@ class OrderModel {
         return rows[0];
     }
 
-    async getLastOrderId(day) {
-        let sql =
-            'SELECT id ' +
-            'FROM `ORDER` ' +
-            `WHERE id LIKE "DH${day}______" ` +
-            'ORDER BY id DESC LIMIT 1';
-        const [rows] = await pool.query(sql);
-        if (!rows[0]) return `DH${day}000000`;
-        return rows[0].id;
-    }
-
     async getOrder(param, page) {
         let where = '';
         if (Object.keys(param).length > 0) {

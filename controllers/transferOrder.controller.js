@@ -30,11 +30,11 @@ class TransferOrderController {
 
         const param = {};
 
-        if (!req.param.orderId) {
+        if (!req.params.id) {
             res.status(400).json({ message: 'order id is required' });
             return;
         }
-        param.order_id = req.param.orderId;
+        param.order_id = req.params.id;
 
         const orderStatus = await orderStatusModel.getOrderStatusById(param.order_id);
         if (orderStatus.current_status == 'received') {
@@ -51,15 +51,16 @@ class TransferOrderController {
         }
 
         param.departure_id = req.session.user.transaction;
-        if (!req.body.destinationId) {
+        if (!req.params.destination) {
             res.status(400).json({ message: 'destination id is required' });
             return;
         }
-        param.destination_id = req.param.destinationId;
+        param.destination_id = req.params.destination;
         param.send_time = now;
         param.current_status = "arriving";
 
         await transferOrderModel.createTransferOrder(param);
+        await orderStatusModel.updateOrderStatus({ current_position: null }, { order_id: req.params.id });
 
         res.status(201).json({ message: 'Success' });
     }
@@ -68,15 +69,16 @@ class TransferOrderController {
         let date = new Date();
         let now = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
 
-        if (!req.param.orderId) {
+        if (!req.params.id) {
             res.status(400).json({ message: 'order id is required' });
             return;
         }
-        const id = req.param.orderId;
+        const id = req.params.id;
         const userTransaction = req.session.user.transaction;
 
         const update = {};
         update.current_position = userTransaction;
+        update.last_position = userTransaction;
 
         const transferOrder = await transferOrderModel.getTransferOrderById(id);
         const orderType = transferOrder.type;
