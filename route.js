@@ -16,6 +16,7 @@ const orderStatusController = require('./controllers/orderStatus.controller');
 const transferOrderController = require('./controllers/transferOrder.controller');
 
 const searchController = require('./controllers/search.controller');
+const statisticController = require('./controllers/statistic.controller');
 
 router.post('/login', loginController.login);
 router.get('/logout', authController.isLogged, loginController.logout);
@@ -62,5 +63,8 @@ router.post('/order/backFail/:id', authController.onlyStaff, orderStatusControll
 router.get('/search/transaction', searchController.searchTransaction);
 router.get('/search/gathering', searchController.searchGathering);
 router.get('/search/order', searchController.searchOrder);
+
+router.post('/statistic/orderStatus', authController.isLogged, statisticController.statisticOrderStatus);
+router.post('/statistic/orderSendReceive', authController.isManager, statisticController.statisticSendReceiveOrder);
 
 module.exports = router;

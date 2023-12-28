@@ -2,6 +2,7 @@ const orderModel = require('../models/order.model');
 const orderStatusModel = require('../models/orderStatus.model');
 
 const transactionModel = require('../models/transaction.model');
+const statisticModel = require('../models/statistic.model');
 
 async function getAction(orderStatus) {
     const order = await orderModel.getOrderById(orderStatus.order_id);
@@ -13,29 +14,35 @@ async function getAction(orderStatus) {
     const receiverTrans = await transactionModel.getTransactionById(receiverTransaction);
     const receiverGathering = receiverTrans.gatheringId;
 
-    let action = [];
+    let action = {};
 
     if (orderStatus.current_status == 'send') {
         if (orderStatus.current_position == receiverTransaction) {
-            if (!orderStatus.time_ship) action = [ `/order/ship/${orderStatus.order_id}` ];
-            else action = [ `/order/success/${orderStatus.order_id}`, `/order/fail/${orderStatus.order_id}` ];
+            if (!orderStatus.time_ship) action = { ship: `/order/ship/${orderStatus.order_id}` };
+            else action = {
+                successOrder: `/order/success/${orderStatus.order_id}`,
+                failOrder: `/order/fail/${orderStatus.order_id}`
+            };
         } else if (orderStatus.current_position == receiverGathering) {
-            action = [ `/order/sendOrder/${orderStatus.order_id}/${receiverTransaction}` ];
+            action = { send: `/order/sendOrder/${orderStatus.order_id}/${receiverTransaction}` };
         } else if (orderStatus.current_position == senderGathering) {
-            action = [ `/order/sendOrder/${orderStatus.order_id}/${receiverGathering}` ];
+            action = { send: `/order/sendOrder/${orderStatus.order_id}/${receiverGathering}` };
         } else if (orderStatus.current_position == senderTransaction) {
-            action = [ `/order/sendOrder/${orderStatus.order_id}/${senderGathering}` ];
+            action = { send: `/order/sendOrder/${orderStatus.order_id}/${senderGathering}` };
         }
     } else if (orderStatus.current_status == 'return') {
         if (orderStatus.current_position == senderTransaction) {
-            if (!orderStatus.time_ship_back) action = [ `/order/shipBack/${orderStatus.order_id}` ];
-            else action = [ `/order/backSuccess/${orderStatus.order_id}`, `/order/backFail/${orderStatus.order_id}` ];
+            if (!orderStatus.time_ship_back) action = { shipBack: `/order/shipBack/${orderStatus.order_id}` };
+            else action = {
+                backSuccess: `/order/backSuccess/${orderStatus.order_id}`,
+                destroy: `/order/backFail/${orderStatus.order_id}`
+            };
         } else if (orderStatus.current_position == senderGathering) {
-            action = [ `/order/sendOrder/${orderStatus.order_id}/${senderTransaction}` ];
+            action = { send: `/order/sendOrder/${orderStatus.order_id}/${senderTransaction}` };
         } else if (orderStatus.current_position == receiverGathering) {
-            action = [ `/order/sendOrder/${orderStatus.order_id}/${senderGathering}` ];
+            action = { send: `/order/sendOrder/${orderStatus.order_id}/${senderGathering}` };
         } else if (orderStatus.current_position == receiverTransaction) {
-            action = [ `/order/sendOrder/${orderStatus.order_id}/${receiverGathering}` ];
+            action = { send: `/order/sendOrder/${orderStatus.order_id}/${receiverGathering}` };
         }
     }
 
@@ -120,7 +127,7 @@ async function getOrderStatus(orderStatus) {
         status.push({
             time: orderStatus.time_return_trans1,
             position: senderTransaction,
-            description: `Don hang quay lai giao dich ${senderTransaction}`
+            description: `Don hang quay lai diem giao dich ${senderTransaction}`
         });
     }
     if (orderStatus.time_ship_back) {
@@ -203,6 +210,13 @@ class OrderStatusController {
             current_position: null,
         }, { order_id: id });
 
+        await statisticModel.createStatisticOrder({
+            order_id: id,
+	        departure_id: req.session.user.transaction,
+	        destination_id: 'receiver',
+	        time_create: now
+        });
+
         res.status(201).json({ message: 'Success' });
     }
 
@@ -260,6 +274,13 @@ class OrderStatusController {
             current_position: null,
         }, { order_id: id });
 
+        await statisticModel.createStatisticOrder({
+            order_id: id,
+	        departure_id: req.session.user.transaction,
+	        destination_id: 'sender',
+	        time_create: now
+        });
+
         res.status(201).json({ message: 'Success' });
     }
 
@@ -279,6 +300,13 @@ class OrderStatusController {
             last_update: now,
             current_position: null,
         }, { order_id: id });
+
+        await statisticModel.createStatisticOrder({
+            order_id: id,
+	        departure_id: req.session.user.transaction,
+	        destination_id: 'destroy',
+	        time_create: now
+        });
 
         res.status(201).json({ message: 'Success' });
     }

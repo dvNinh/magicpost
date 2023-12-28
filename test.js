@@ -1,2 +1,3 @@
-const { randomString } = require('./utils/util');
-console.log(randomString(6));
+let date = new Date();
+date.setDate(date.getDate() - 28);
+console.log(date.getDate());

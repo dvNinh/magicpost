@@ -3,6 +3,7 @@ const orderStatusModel = require('../models/orderStatus.model');
 const transferOrderModel = require('../models/transferOrder.model');
 
 const transactionModel = require('../models/transaction.model');
+const statisticModel = require('../models/statistic.model');
 
 class TransferOrderController {
     async getTransferOrderOfTransaction(req, res, next) {
@@ -81,7 +82,7 @@ class TransferOrderController {
         update.last_position = userTransaction;
 
         const transferOrder = await transferOrderModel.getTransferOrderById(id);
-        const orderType = transferOrder.type;
+        const transferType = transferOrder.type;
 
         const order = await orderModel.getOrderById(id);
         const senderTransaction = order.SenderTransactionAreaID;
@@ -95,13 +96,13 @@ class TransferOrderController {
         if (!order) {
             res.status(400).json({ message: 'invalid required' });
             return;
-        } else if (orderType == 'send') {
+        } else if (transferType == 'send') {
             if (userTransaction == senderTransaction) update.time_send_trans1 = now;
             if (userTransaction == senderGathering) update.time_send_gather1 = now;
             if (userTransaction == receiverGathering) update.time_send_gather2 = now;
             if (userTransaction == receiverTransaction) update.time_send_trans2 = now;
             update.last_update = now;
-        } else if (orderType == 'return') {
+        } else if (transferType == 'return') {
             if (userTransaction == senderTransaction) update.time_return_trans1 = now;
             if (userTransaction == senderGathering) update.time_return_gather1 = now;
             if (userTransaction == receiverGathering) update.time_return_gather2 = now;
@@ -110,6 +111,12 @@ class TransferOrderController {
         }
 
         await orderStatusModel.updateOrderStatus(update, { order_id: id })
+        await statisticModel.createStatisticOrder({
+            order_id: id,
+	        departure_id: transferOrder.departure_id,
+	        destination_id: transferOrder.destination_id,
+	        time_create: now
+        });
         await transferOrderModel.deleteTransferOrder(id);
         res.status(201).json({ message: 'Success' });
     }

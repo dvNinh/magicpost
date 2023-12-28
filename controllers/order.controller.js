@@ -1,5 +1,6 @@
 const orderModel = require('../models/order.model');
 const orderStatusModel = require('../models/orderStatus.model');
+const statisticModel = require('../models/statistic.model');
 
 const { randomString } = require('../utils/util');
 
@@ -12,11 +13,10 @@ class OrderController {
         req.query.receiver ? param.ReceiverID = req.query.receiver : null;
         req.query.senderTransactionId ? param.SenderTransactionId = req.query.senderTransactionId : null;
         req.query.receiverTransactionId ? param.ReceiverTransactionId = req.query.receiverTransactionId : null;
+        req.query.senderAddress ? param.SenderAddress = req.query.senderAddress : null
+        req.query.receiverAddress ? param.ReceiverAddress = req.query.receiverAddress : null
         req.query.arriveAt ? param.ArriveAt = req.query.arriveAt : null;
         req.query.orderType ? param.OrderType = req.query.orderType : null;
-        req.query.orderInfo ? param.OrderInfo = req.query.orderInfo : null;
-        req.query.price ? param.Price = req.query.price : null;
-        req.query.attachedFile ? param.AttachedFile = req.query.attachedFile : null;
         req.query.weight ? param.Weight = req.query.weight : null;
         req.query.shippingCost ? param.ShippingCost = req.query.shippingCost : null;
         req.query.othersCost ? param.OthersCost = req.query.othersCost : null;
@@ -33,9 +33,11 @@ class OrderController {
                 receiver: order.ReceiverID,
                 senderTransactionId: order.SenderTransactionAreaID,
                 receiverTransactionId: order.ReceiverTransactionAreaID,
+                senderAddress: order.SenderAddress,
+                receiverAddress: order.ReceiverAddress,
                 arriveAt: order.ArriveAt,
                 orderType: order.OrderType,
-                orderInfo: order.OrderInfo,
+                orderInfo: JSON.parse(order.OrderInfo),
                 price: JSON.parse(order.Price),
                 attachedFile: order.AttachedFile,
                 weight: order.Weight,
@@ -73,29 +75,66 @@ class OrderController {
         }
         param.ReceiverTransactionAreaID = req.body.receiverTransactionId;
         
-        if (!req.body.weight) {
-            res.status(400).json({ message: 'weight is required' });
+        if (!req.body.receiverAddress) {
+            res.status(400).json({ message: 'receiver address is required' });
             return;
         }
-        param.Weight = req.body.weight;
+        param.ReceiverAddress = req.body.receiverAddress;
+
+        req.body.senderAddress ? param.SenderAddress = req.body.senderAddress : null;
 
         param.ArriveAt = now;
-        req.body.orderType ? param.OrderType = req.body.orderType : null;
-        req.body.orderInfo ? param.OrderInfo = req.body.orderInfo : null;
 
-        let price = {};
-        if (req.body.senderTransactionId == req.body.receiverTransactionId) {
-            if (req.body.weight <= 1000) price.mainCharge = 10000
-            else price.mainCharge = 10000 + (req.body.weight - 1000) * 2
+        if (!req.body.orderType) {
+            res.status(400).json({ message: 'order type is required' });
+            return;
+        } else if (req.body.orderType == 'hanghoa') {
+            param.OrderType = req.body.orderType;
+
+            if (!req.body.weight) {
+                res.status(400).json({ message: 'weight is required' });
+                return;
+            }
+            param.Weight = parseInt(req.body.weight);
+
+            if (!req.body.orderInfo) {
+                res.status(400).json({ message: 'order info is required' });
+                return;
+            }
+            param.OrderInfo = JSON.stringify(req.body.orderInfo);
+    
+            let price = {};
+            if (req.body.senderTransactionId == req.body.receiverTransactionId) {
+                if (req.body.weight <= 1000) price.mainCharge = 10000
+                else price.mainCharge = 10000 + (req.body.weight - 1000) * 2
+            } else {
+                if (req.body.weight <= 1000) price.mainCharge = 13000
+                else price.mainCharge = 13000 + (req.body.weight - 1000) * 3
+            }
+            price.surcharge = price.mainCharge * 10 / 100;
+            price.vat = (price.mainCharge + price.surcharge) * 10 / 100;
+            price.total = price.mainCharge + price.surcharge + price.vat;
+    
+            param.Price = JSON.stringify(price);
+        } else if (req.body.orderType == 'tailieu') {
+            param.OrderType = req.body.orderType;
+
+            let price = {};
+            if (req.body.senderTransactionId == req.body.receiverTransactionId) {
+                price.mainCharge = 10000;
+            } else {
+                price.mainCharge = 15000;
+            }
+            price.surcharge = price.mainCharge * 10 / 100;
+            price.vat = (price.mainCharge + price.surcharge) * 10 / 100;
+            price.total = price.mainCharge + price.surcharge + price.vat;
+    
+            param.Price = JSON.stringify(price)
         } else {
-            if (req.body.weight <= 1000) price.mainCharge = 13000
-            else price.mainCharge = 13000 + (req.body.weight - 1000) * 3
+            res.status(400).json({ message: 'order type is invalid' });
+            return;
         }
-        price.surcharge = price.mainCharge * 10 / 100;
-        price.vat = (price.mainCharge + price.surcharge) * 10 / 100;
-        price.total = price.mainCharge + price.surcharge + price.vat;
-
-        param.Price = JSON.stringify(price);
+        
         param.ShippingCost = 15000;
         req.body.othersCost ? param.OthersCost = req.body.othersCost : null;
 
@@ -111,6 +150,12 @@ class OrderController {
             current_position: req.session.user.transaction,
             last_position: req.session.user.transaction
         });
+        await statisticModel.createStatisticOrder({
+            order_id: newOderId,
+	        departure_id: 'sender',
+	        destination_id: req.session.user.transaction,
+	        time_create: now
+        });
 
         const order = await orderModel.getOrderById(newOderId);
 
@@ -120,9 +165,10 @@ class OrderController {
             receiver: order.ReceiverID,
             senderTransactionId: order.SenderTransactionAreaID,
             receiverTransactionId: order.ReceiverTransactionAreaID,
+            receiverAddress: order.ReceiverAddress,
             arriveAt: order.ArriveAt,
             orderType: order.OrderType,
-            orderInfo: order.OrderInfo,
+            orderInfo: JSON.parse(order.OrderInfo),
             price: JSON.parse(order.Price),
             attachedFile: order.AttachedFile,
             weight: order.Weight,
@@ -141,11 +187,8 @@ class OrderController {
         // req.body.receiverTransactionId ? update.ReceiverTransactionAreaID = req.body.receiverTransactionId : null;
         req.body.orderType ? update.OrderType = req.body.orderType : null;
         req.body.orderInfo ? update.OrderInfo = req.body.orderInfo : null;
-        req.body.price ? update.Price = req.body.price : null;
         req.body.attachedFile ? update.AttachedFile = req.body.attachedFile : null;
         req.body.weight ? update.Weight = req.body.weight : null;
-        req.body.shippingCost ? update.ShippingCost = req.body.shippingCost : null;
-        req.body.othersCost ? update.OthersCost = req.body.othersCost : null;
         req.body.notes ? update.Notes = req.body.notes : null;
 
         const condition = {};
@@ -157,9 +200,6 @@ class OrderController {
         req.query.receiverTransactionId ? condition.ReceiverTransactionAreaID = req.query.receiverTransactionId : null;
         req.query.arriveAt ? condition.ArriveAt = req.query.arriveAt : null;
         req.query.orderType ? condition.OrderType = req.query.orderType : null;
-        req.query.orderInfo ? condition.OrderInfo = req.query.orderInfo : null;
-        req.query.price ? condition.Price = req.query.price : null;
-        req.query.attachedFile ? condition.AttachedFile = req.query.attachedFile : null;
         req.query.weight ? condition.Weight = req.query.weight : null;
         req.query.shippingCost ? condition.ShippingCost = req.query.shippingCost : null;
         req.query.othersCost ? condition.OthersCost = req.query.othersCost : null;
