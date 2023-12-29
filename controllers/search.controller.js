@@ -109,20 +109,24 @@ class SearchController {
         const page = !!parseInt(req.query.page) ? parseInt(req.query.page) : 1;
         const limit = !!parseInt(req.query.limit) ? parseInt(req.query.limit) : 10;
         const sortOrder = req.query.sortOrder ? req.query.sortOrder : 'descending';
+
+        let transaction;
+        if (req.session.user.role == 'leader') {
+            if (!req.query.transaction) {
+                res.status(400).json({ message: 'transaction is required' });
+                return;
+            }
+            transaction = req.query.transaction
+        } else transaction = req.session.user.transaction;
         
         let from, to, filter;
-        
+        if (!req.query.filter) filter = [ 'Arriving', 'Processing', 'Departed', 'Returned', 'Discarded' ];
+        else filter = req.query.filter;
+
         if (req.query.from) from = req.query.from;
         if (req.query.to) to = req.query.to;
-        if (req.query.filter) {
-            if (req.query.filter == 'Arriving') filter = 'send';
-            if (req.query.filter == 'Processing') filter = 'return';
-            if (req.query.filter == 'Departed') filter = 'received';
-            if (req.query.filter == 'Returned') filter = 'received_back';
-            if (req.query.filter == 'Discarded') filter = 'destroyed';
-        }
 
-        const orders = await orderModel.searchOrder(searchValue, from, to, page, limit, sortOrder, filter);
+        const orders = await orderModel.searchOrder(searchValue, from, to, page, limit, sortOrder);
         let orderList = [];
         for (let order of orders) {
             const orderStatus = await orderStatusModel.getOrderStatusById(order.id);
@@ -146,7 +150,41 @@ class SearchController {
                 notes: order.Notes,
                 status
             };
-            orderList.push(od);
+
+            const senderTransaction = od.senderTransactionId;
+            const senderTrans = await transactionModel.getTransactionById(senderTransaction);
+            const senderGathering = senderTrans.gatheringId;
+
+            const receiverTransaction = od.receiverTransactionId;
+            const receiverTrans = await transactionModel.getTransactionById(receiverTransaction);
+            const receiverGathering = receiverTrans.gatheringId;
+
+            let arriving = [], processing = [], departed = [], returned = [], discarded = [];
+
+            if (transaction == receiverTransaction) {
+                if (od.status.time_return_trans2) returned.push(od);
+                else if (od.status.time_ship) departed.push(od);
+                else if (od.status.time_send_trans2) processing.push(od);
+                else arriving.push(od);
+            } else if (transaction == receiverGathering) {
+                if (od.status.time_send_trans2) departed.push(od);
+                else if (od.status.time_send_gather2) processing.push(od);
+                else arriving.push(od);
+            } else if (transaction == senderGathering) {
+                if (od.status.time_send_gather2) departed.push(od);
+                else if (od.status.time_send_gather1) processing.push(od);
+                else arriving.push(od);
+            } else if (transaction == senderTransaction) {
+                if (od.status.time_destroy) discarded.push(od);
+                else if (od.time_send_gather1) departed.push(od);
+                else processing.push(od);
+            }
+
+            if (filter.includes('Arriving')) orderList = [...orderList, ...arriving];
+            if (filter.includes('Processing')) orderList = [...orderList, ...processing];
+            if (filter.includes('Departed')) orderList = [...orderList, ...departed];
+            if (filter.includes('Returned')) orderList = [...orderList, ...returned];
+            if (filter.includes('Discarded')) orderList = [...orderList, ...discarded];
         }
         res.status(200).json(orderList);
     }

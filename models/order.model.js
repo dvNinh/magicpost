@@ -28,7 +28,7 @@ class OrderModel {
         return rows;
     }
 
-    async searchOrder(searchValue, from, to, page, limit, sortOrder, filter) {
+    async searchOrder(searchValue, from, to, page, limit, sortOrder) {
         const sort = sortOrder == 'ascending' ? 'ASC' : 'DESC';
         let where = '';
         let values = [];
@@ -39,10 +39,6 @@ class OrderModel {
         if (to) {
             where += 'AND os.last_update <= ? ';
             values.push(to);
-        }
-        if (filter) {
-            where += 'AND os.current_status = ? ';
-            values.push(filter);
         }
         values.push((page - 1) * limit, limit);
         var sql = 
