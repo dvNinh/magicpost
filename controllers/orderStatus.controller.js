@@ -258,8 +258,8 @@ class OrderStatusController {
         if (orderStatus.time_leave_s_trans1) {
             status.push({
                 time: orderStatus.time_leave_s_trans1,
-                position: null,
-                name: null,
+                position: senderGathering,
+                name: senderGather.name,
                 status: 'departed'
             });
         }
@@ -275,8 +275,8 @@ class OrderStatusController {
         if (orderStatus.time_leave_s_gather1) {
             status.push({
                 time: orderStatus.time_leave_s_gather1,
-                position: null,
-                name: null,
+                position: receiverGathering,
+                name: receiverGather.name,
                 status: 'departed'
             });
         }
@@ -292,8 +292,8 @@ class OrderStatusController {
         if (orderStatus.time_leave_s_gather2) {
             status.push({
                 time: orderStatus.time_leave_s_gather2,
-                position: null,
-                name: null,
+                position: receiverTransaction,
+                name: receiverTrans.TransactionAreaNAME,
                 status: 'departed'
             });
         }
@@ -327,22 +327,16 @@ class OrderStatusController {
         if (orderStatus.time_return_trans2) {
             status.push({
                 time: orderStatus.time_return_trans2,
-                position: null,
-                name: null,
-                status: 'shippingFailed'
-            });
-            status.push({
-                time: orderStatus.time_return_trans2,
                 position: receiverTransaction,
                 name: receiverTrans.TransactionAreaNAME,
-                status: 'returned'
+                status: 'shippingFailed'
             });
         }
         if (orderStatus.time_leave_r_trans2) {
             status.push({
                 time: orderStatus.time_leave_r_trans2,
-                position: null,
-                name: null,
+                position: receiverGathering,
+                name: receiverGather.name,
                 status: 'departed'
             });
         }
@@ -358,8 +352,8 @@ class OrderStatusController {
         if (orderStatus.time_leave_r_gather2) {
             status.push({
                 time: orderStatus.time_leave_r_gather2,
-                position: null,
-                name: null,
+                position: senderGathering,
+                name: senderGather.name,
                 status: 'departed'
             });
         }
@@ -375,8 +369,8 @@ class OrderStatusController {
         if (orderStatus.time_leave_r_gather1) {
             status.push({
                 time: orderStatus.time_leave_r_gather1,
-                position: null,
-                name: null,
+                position: senderTransaction,
+                name: senderTrans.TransactionAreaNAME,
                 status: 'departed'
             });
         }
@@ -393,8 +387,8 @@ class OrderStatusController {
         if (orderStatus.time_receive_back) {
             status.push({
                 time: orderStatus.time_receive_back,
-                position: null,
-                name: null,
+                position: senderTransaction,
+                name: senderTrans.TransactionAreaNAME,
                 status: 'returned'
             });
         }
@@ -402,8 +396,8 @@ class OrderStatusController {
         if (orderStatus.time_destroy) {
             status.push({
                 time: orderStatus.time_destroy,
-                position: null,
-                name: null,
+                position: senderTransaction,
+                name: senderTrans.TransactionAreaNAME,
                 status: 'destroyed'
             });
         }
