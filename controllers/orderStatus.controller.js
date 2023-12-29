@@ -208,13 +208,11 @@ class OrderStatusController {
             }
         } else if (orderStatus.current_status == 'return') {
             if (orderStatus.current_position == senderTransaction) {
-                if (!orderStatus.time_ship_back) {
-                    action = {
-                        type: 'return',
-                        successAction: `/order/backSuccess/${orderStatus.order_id}`,
-                        failedAction: `/order/backFail/${orderStatus.order_id}`
-                    };
-                }
+                action = {
+                    type: 'return',
+                    successAction: `/order/backSuccess/${orderStatus.order_id}`,
+                    failedAction: `/order/backFail/${orderStatus.order_id}`
+                };
             } else if (orderStatus.current_position == senderGathering) {
                 action = {
                     type: 'transfer',
@@ -391,31 +389,17 @@ class OrderStatusController {
                 status: 'arrived'
             });
         }
-        if (orderStatus.time_ship_back) {
-            status.push({
-                time: orderStatus.time_ship_back,
-                position: null,
-                name: null,
-                status: 'shippingStarted'
-            });
-        }
 
         if (orderStatus.time_receive_back) {
             status.push({
                 time: orderStatus.time_receive_back,
                 position: null,
                 name: null,
-                status: 'shippingSucceeded'
+                status: 'returned'
             });
         }
 
         if (orderStatus.time_destroy) {
-            status.push({
-                time: orderStatus.time_destroy,
-                position: null,
-                name: null,
-                status: 'shippingFailed'
-            });
             status.push({
                 time: orderStatus.time_destroy,
                 position: null,
