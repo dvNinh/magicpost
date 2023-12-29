@@ -225,7 +225,7 @@ class OrderStatusController {
                 time: orderStatus.time_send_trans1,
                 position: senderTransaction,
                 name: senderTrans.TransactionAreaNAME,
-                status: 'receive'
+                status: 'accepted'
             });
         }
         if (orderStatus.time_leave_s_trans1) {
@@ -233,7 +233,7 @@ class OrderStatusController {
                 time: orderStatus.time_leave_s_trans1,
                 position: null,
                 name: null,
-                status: 'receive'
+                status: 'departed'
             });
         }
 
@@ -242,7 +242,7 @@ class OrderStatusController {
                 time: orderStatus.time_send_gather1,
                 position: senderGathering,
                 name: senderGather.name,
-                status: 'send'
+                status: 'arrived'
             });
         }
         if (orderStatus.time_leave_s_gather1) {
@@ -250,7 +250,7 @@ class OrderStatusController {
                 time: orderStatus.time_leave_s_gather1,
                 position: null,
                 name: null,
-                status: 'send'
+                status: 'departed'
             });
         }
 
@@ -259,7 +259,7 @@ class OrderStatusController {
                 time: orderStatus.time_send_gather2,
                 position: receiverGathering,
                 name: receiverGather.name,
-                status: 'send'
+                status: 'arrived'
             });
         }
         if (orderStatus.time_leave_s_gather2) {
@@ -267,7 +267,7 @@ class OrderStatusController {
                 time: orderStatus.time_leave_s_gather2,
                 position: null,
                 name: null,
-                status: 'send'
+                status: 'departed'
             });
         }
 
@@ -276,7 +276,7 @@ class OrderStatusController {
                 time: orderStatus.time_send_trans2,
                 position: receiverTransaction,
                 name: receiverTrans.TransactionAreaNAME,
-                status: 'send'
+                status: 'arrived'
             });
         }
         if (orderStatus.time_ship) {
@@ -284,7 +284,7 @@ class OrderStatusController {
                 time: orderStatus.time_ship,
                 position: null,
                 name: null,
-                status: 'ship'
+                status: 'shippingStarted'
             });
         }
 
@@ -293,16 +293,22 @@ class OrderStatusController {
                 time: orderStatus.time_receive,
                 position: null,
                 name: null,
-                status: 'success'
+                status: 'shippingSucceeded'
             });
         }
 
         if (orderStatus.time_return_trans2) {
             status.push({
                 time: orderStatus.time_return_trans2,
+                position: null,
+                name: null,
+                status: 'shippingFailed'
+            });
+            status.push({
+                time: orderStatus.time_return_trans2,
                 position: receiverTransaction,
                 name: receiverTrans.TransactionAreaNAME,
-                status: 'fail'
+                status: 'returned'
             });
         }
         if (orderStatus.time_leave_r_trans2) {
@@ -310,7 +316,7 @@ class OrderStatusController {
                 time: orderStatus.time_leave_r_trans2,
                 position: null,
                 name: null,
-                status: 'return'
+                status: 'departed'
             });
         }
 
@@ -319,7 +325,7 @@ class OrderStatusController {
                 time: orderStatus.time_return_gather2,
                 position: receiverGathering,
                 name: receiverGather.name,
-                status: 'return'
+                status: 'arrived'
             });
         }
         if (orderStatus.time_leave_r_gather2) {
@@ -327,7 +333,7 @@ class OrderStatusController {
                 time: orderStatus.time_leave_r_gather2,
                 position: null,
                 name: null,
-                status: 'return'
+                status: 'departed'
             });
         }
 
@@ -336,7 +342,7 @@ class OrderStatusController {
                 time: orderStatus.time_return_gather1,
                 position: senderGathering,
                 name: senderGather.name,
-                status: 'return'
+                status: 'arrived'
             });
         }
         if (orderStatus.time_leave_r_gather1) {
@@ -344,7 +350,7 @@ class OrderStatusController {
                 time: orderStatus.time_leave_r_gather1,
                 position: null,
                 name: null,
-                status: 'return'
+                status: 'departed'
             });
         }
 
@@ -353,7 +359,7 @@ class OrderStatusController {
                 time: orderStatus.time_return_trans1,
                 position: senderTransaction,
                 name: senderTrans.TransactionAreaNAME,
-                status: 'return'
+                status: 'arrived'
             });
         }
         if (orderStatus.time_ship_back) {
@@ -361,7 +367,7 @@ class OrderStatusController {
                 time: orderStatus.time_ship_back,
                 position: null,
                 name: null,
-                status: 'shipBack'
+                status: 'shippingStarted'
             });
         }
 
@@ -370,7 +376,7 @@ class OrderStatusController {
                 time: orderStatus.time_receive_back,
                 position: null,
                 name: null,
-                status: 'receiveBack'
+                status: 'shippingSucceeded'
             });
         }
 
@@ -379,7 +385,13 @@ class OrderStatusController {
                 time: orderStatus.time_destroy,
                 position: null,
                 name: null,
-                status: 'destroy'
+                status: 'shippingFailed'
+            });
+            status.push({
+                time: orderStatus.time_destroy,
+                position: null,
+                name: null,
+                status: 'destroyed'
             });
         }
         return status;
