@@ -210,12 +210,7 @@ class OrderStatusController {
             if (orderStatus.current_position == senderTransaction) {
                 if (!orderStatus.time_ship_back) {
                     action = {
-                        type: 'startShipping',
-                        successAction: `/order/shipBack/${orderStatus.order_id}`
-                    };
-                } else {
-                    action = {
-                        type: 'finishShipping',
+                        type: 'return',
                         successAction: `/order/backSuccess/${orderStatus.order_id}`,
                         failedAction: `/order/backFail/${orderStatus.order_id}`
                     };
