@@ -156,10 +156,12 @@ class SearchController {
             const senderTransaction = od.senderTransactionId;
             const senderTrans = await transactionModel.getTransactionById(senderTransaction);
             const senderGathering = senderTrans.gatheringId;
+            const senderGather = await gatheringModel.getGatheringById(senderGathering);
 
             const receiverTransaction = od.receiverTransactionId;
             const receiverTrans = await transactionModel.getTransactionById(receiverTransaction);
             const receiverGathering = receiverTrans.gatheringId;
+            const receiverGather = await gatheringModel.getGatheringById(receiverGathering);
 
             let arriving = [], processing = [], departed = [], returned = [], discarded = [];
 
@@ -180,7 +182,10 @@ class SearchController {
             }
             if (transaction == receiverGathering) {
                 if (odst.time_leave_r_gather2) departed.push(od);
-                else if (odst.time_return_gather2) processing.push(od);
+                else if (odst.time_return_gather2) {
+                    od.destination = senderGather.name;
+                    processing.push(od);
+                }
                 else if (odst.time_leave_r_trans2) {
                     if (req.session.user.role != 'leader') {
                         od.action = {
@@ -191,7 +196,10 @@ class SearchController {
                     arriving.push(od);
                 }
                 else if (odst.time_leave_s_gather2) departed.push(od);
-                else if (odst.time_send_gather2) processing.push(od);
+                else if (odst.time_send_gather2) {
+                    od.destination = receiverTrans.TransactionAreaNAME;
+                    processing.push(od);
+                }
                 else if (odst.time_leave_s_gather1) {
                     if (req.session.user.role != 'leader') {
                         od.action = {
@@ -204,7 +212,10 @@ class SearchController {
             }
             if (transaction == senderGathering) {
                 if (odst.time_leave_r_gather1) departed.push(od);
-                else if (odst.time_return_gather1) processing.push(od);
+                else if (odst.time_return_gather1) {
+                    od.destination = senderTrans.TransactionAreaNAME;
+                    processing.push(od);
+                }
                 else if (odst.time_leave_r_gather2) {
                     if (req.session.user.role != 'leader') {
                         od.action = {
@@ -215,7 +226,10 @@ class SearchController {
                     arriving.push(od);
                 }
                 else if (odst.time_leave_s_gather1) departed.push(od);
-                else if (odst.time_send_gather1) processing.push(od);
+                else if (odst.time_send_gather1) {
+                    od.destination = receiverGather.name;
+                    processing.push(od);
+                }
                 else if (odst.time_leave_s_trans1) {
                     if (req.session.user.role != 'leader') {
                         od.action = {
@@ -240,7 +254,10 @@ class SearchController {
                     arriving.push(od);
                 }
                 else if (odst.time_leave_s_trans1) departed.push(od);
-                else if (odst.time_send_trans1) processing.push(od);
+                else if (odst.time_send_trans1) {
+                    od.destination = senderGather.name;
+                    processing.push(od);
+                }
             }
 
             if (filter.includes('Arriving')) orderList = [...orderList, ...arriving];

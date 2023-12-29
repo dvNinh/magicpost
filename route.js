@@ -48,8 +48,8 @@ router.get('/order', authController.isLogged, orderController.getOrder);
 router.post('/order', authController.onlyTransacting, orderController.createOrder);
 router.put('/order', authController.isLogged, orderController.updateOrder);
 
-router.get('/order/getOrder', authController.onlyStaff, orderStatusController.getOrderOfTransaction); // lay danh sach don hang da nhan
-router.get('/order/getTransferOrder', authController.onlyStaff, transferOrderController.getTransferOrderOfTransaction); // lay danh sach don hang cho tiep nhan
+router.get('/order/getOrder', authController.onlyStaff, orderStatusController.getOrderOfTransaction);
+router.get('/order/getTransferOrder', authController.onlyStaff, transferOrderController.getTransferOrderOfTransaction);
 router.post('/order/sendOrder/:id/:destination', authController.onlyStaff, transferOrderController.createTransferOrder);
 router.post('/order/acceptOrder/:id', authController.onlyStaff, transferOrderController.acceptTransferOrder);
 
@@ -65,7 +65,7 @@ router.get('/search/gathering', authController.isLogged, searchController.search
 router.get('/search/order', authController.isLogged, searchController.searchOrder);
 router.get('/search/orderStatus', searchController.searchOrderStatus);
 
-router.post('/statistic/orderStatus', authController.isLogged, statisticController.statisticOrderStatus);
-router.post('/statistic/orderSendReceive', authController.isManager, statisticController.statisticSendReceiveOrder);
+router.get('/statistic/orderStatus', authController.isLogged, statisticController.statisticOrderStatus);
+router.get('/statistic/orderSendReceive', authController.isManager, statisticController.statisticSendReceiveOrder);
 
 module.exports = router;

@@ -58,7 +58,12 @@ class TransferOrderController {
             param.type = orderStatus.current_status;
         }
 
+        if (req.session.user.transaction != orderStatus.current_position) {
+            res.status(400).json({ message: 'access is not allowed' });
+            return;
+        }
         param.departure_id = req.session.user.transaction;
+        
         if (!req.params.destination) {
             res.status(400).json({ message: 'destination id is required' });
             return;

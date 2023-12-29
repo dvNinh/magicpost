@@ -12,22 +12,22 @@ class StatisticController {
                 return;
             }
         } else {
-            if (req.body.transaction) {
-                transactionId = req.body.transaction;
+            if (req.query.transaction) {
+                transactionId = req.query.transaction;
             }
         }
-        if (!req.body.timestamp) {
+        if (!req.query.timestamp) {
             res.status(400).json({ message: 'timestamp is required' });
             return;
         } else {
-            if (req.body.timestamp == '1ngay') {
+            if (req.query.timestamp == '1ngay') {
                 let orderStatusList = [];
-                for (let i = 1; i <= 24; i++) {
+                for (let i = 0; i < 24; i++) {
                     let date = new Date();
                     date.setHours(date.getHours() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}`;
                     date.setHours(date.getHours() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}`;
                     const orderStatuses = await statisticModel.getOrderStatus(from, to, transactionId);
                     let success = 0, fail = 0, receivedBack = 0, destroy = 0;
                     for (let orderStatus of orderStatuses) {
@@ -52,14 +52,14 @@ class StatisticController {
                     });
                 }
                 res.status(200).json(orderStatusList);
-            } else if (req.body.timestamp == '7ngay') {
+            } else if (req.query.timestamp == '7ngay') {
                 let orderStatusList = [];
-                for (let i = 1; i <= 7; i++) {
+                for (let i = 0; i < 7; i++) {
                     let date = new Date();
                     date.setDate(date.getDate() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     date.setDate(date.getDate() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     const orderStatuses = await statisticModel.getOrderStatus(from, to, transactionId);
                     let success = 0, fail = 0, receivedBack = 0, destroy = 0;
                     for (let orderStatus of orderStatuses) {
@@ -84,7 +84,7 @@ class StatisticController {
                     });
                 }
                 res.status(200).json(orderStatusList);
-            } else if (req.body.timestamp == '1thang') {
+            } else if (req.query.timestamp == '1thang') {
                 let orderStatusList = [];
 
                 var today = new Date();
@@ -92,12 +92,12 @@ class StatisticController {
                 if (today.getMonth() == 0) day = new Date(today.getFullYear() - 1, 12, 0).getDate();
                 else day = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
 
-                for (let i = 1; i <= day; i++) {
+                for (let i = 0; i < day; i++) {
                     let date = new Date();
                     date.setDate(date.getDate() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     date.setDate(date.getDate() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     const orderStatuses = await statisticModel.getOrderStatus(from, to, transactionId);
                     let success = 0, fail = 0, receivedBack = 0, destroy = 0;
                     for (let orderStatus of orderStatuses) {
@@ -122,14 +122,15 @@ class StatisticController {
                     });
                 }
                 res.status(200).json(orderStatusList);
-            } else if (req.body.timestamp == '1nam') {
+            } else if (req.query.timestamp == '1nam') {
                 let orderStatusList = [];
-                for (let i = 1; i <= 12; i++) {
+                for (let i = 0; i < 12; i++) {
                     let date = new Date();
                     date.setMonth(date.getMonth() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    date.setDate(1);
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     date.setMonth(date.getMonth() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     const orderStatuses = await statisticModel.getOrderStatus(from, to, transactionId);
                     let success = 0, fail = 0, receivedBack = 0, destroy = 0;
                     for (let orderStatus of orderStatuses) {
@@ -146,15 +147,14 @@ class StatisticController {
                         }
                     }
                     orderStatusList.push({
-                        from,
-                        to,
+                        from, to,
                         status: {
                             success, fail, receivedBack, destroy 
                         }
                     });
                 }
                 res.status(200).json(orderStatusList);
-            } else if (req.body.timestamp == 'toanbo') {
+            } else if (req.query.timestamp == 'toanbo') {
                 const orderStatuses = await statisticModel.getOrderStatus(null, null, transactionId);
                 let success = 0, fail = 0, receivedBack = 0, destroy = 0;
                 for (let orderStatus of orderStatuses) {
@@ -190,22 +190,22 @@ class StatisticController {
                 return;
             }
         } else {
-            if (req.body.transaction) {
-                transactionId = req.body.transaction;
+            if (req.query.transaction) {
+                transactionId = req.query.transaction;
             }
         }
-        if (!req.body.timestamp) {
+        if (!req.query.timestamp) {
             res.status(400).json({ message: 'timestamp is required' });
             return;
         } else {
-            if (req.body.timestamp == '1ngay') {
+            if (req.query.timestamp == '1ngay') {
                 let sendReceiveOrderList = [];
-                for (let i = 1; i <= 24; i++) {
+                for (let i = 0; i < 24; i++) {
                     let date = new Date();
                     date.setHours(date.getHours() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}`;
                     date.setHours(date.getHours() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}`;
                     let send = 0, receive = 0;
                     if (!transactionId) {
                         send = await statisticModel.countReceiveOrder(from, to, 'receiver');
@@ -220,14 +220,14 @@ class StatisticController {
                     });
                 }
                 res.status(200).json(sendReceiveOrderList);
-            } else if (req.body.timestamp == '7ngay') {
+            } else if (req.query.timestamp == '7ngay') {
                 let sendReceiveOrderList = [];
-                for (let i = 1; i <= 7; i++) {
+                for (let i = 0; i < 7; i++) {
                     let date = new Date();
                     date.setDate(date.getDate() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     date.setDate(date.getDate() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     let send = 0, receive = 0;
                     if (!transactionId) {
                         send = await statisticModel.countReceiveOrder(from, to, 'receiver');
@@ -242,14 +242,20 @@ class StatisticController {
                     });
                 }
                 res.status(200).json(sendReceiveOrderList);
-            } else if (req.body.timestamp == '1thang') {
+            } else if (req.query.timestamp == '1thang') {
                 let sendReceiveOrderList = [];
-                for (let i = 1; i <= 30; i++) {
+
+                var today = new Date();
+                var day;
+                if (today.getMonth() == 0) day = new Date(today.getFullYear() - 1, 12, 0).getDate();
+                else day = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+
+                for (let i = 0; i < day; i++) {
                     let date = new Date();
                     date.setDate(date.getDate() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     date.setDate(date.getDate() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     let send = 0, receive = 0;
                     if (!transactionId) {
                         send = await statisticModel.countReceiveOrder(from, to, 'receiver');
@@ -264,14 +270,15 @@ class StatisticController {
                     });
                 }
                 res.status(200).json(sendReceiveOrderList);
-            } else if (req.body.timestamp == '1nam') {
+            } else if (req.query.timestamp == '1nam') {
                 let sendReceiveOrderList = [];
-                for (let i = 1; i <= 12; i++) {
+                for (let i = 0; i < 12; i++) {
                     let date = new Date();
+                    date.setDate(1);
                     date.setMonth(date.getMonth() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     date.setMonth(date.getMonth() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                     let send = 0, receive = 0;
                     if (!transactionId) {
                         send = await statisticModel.countReceiveOrder(from, to, 'receiver');
@@ -286,7 +293,7 @@ class StatisticController {
                     });
                 }
                 res.status(200).json(sendReceiveOrderList);
-            } else if (req.body.timestamp == 'toanbo') {
+            } else if (req.query.timestamp == 'toanbo') {
                 let send = 0, receive = 0;
                 if (!transactionId) {
                     send = await statisticModel.countReceiveOrder(null, null, 'receiver');
