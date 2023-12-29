@@ -25,9 +25,9 @@ class StatisticController {
                 for (let i = 0; i < 24; i++) {
                     let date = new Date();
                     date.setHours(date.getHours() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:00:00`;
                     date.setHours(date.getHours() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:00:00`;
                     const orderStatuses = await statisticModel.getOrderStatus(from, to, transactionId);
                     let success = 0, fail = 0, receivedBack = 0, destroy = 0;
                     for (let orderStatus of orderStatuses) {
@@ -57,9 +57,9 @@ class StatisticController {
                 for (let i = 0; i < 7; i++) {
                     let date = new Date();
                     date.setDate(date.getDate() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     date.setDate(date.getDate() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     const orderStatuses = await statisticModel.getOrderStatus(from, to, transactionId);
                     let success = 0, fail = 0, receivedBack = 0, destroy = 0;
                     for (let orderStatus of orderStatuses) {
@@ -76,8 +76,7 @@ class StatisticController {
                         }
                     }
                     orderStatusList.push({
-                        from,
-                        to,
+                        from, to,
                         status: {
                             success, fail, receivedBack, destroy 
                         }
@@ -95,9 +94,9 @@ class StatisticController {
                 for (let i = 0; i < day; i++) {
                     let date = new Date();
                     date.setDate(date.getDate() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     date.setDate(date.getDate() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     const orderStatuses = await statisticModel.getOrderStatus(from, to, transactionId);
                     let success = 0, fail = 0, receivedBack = 0, destroy = 0;
                     for (let orderStatus of orderStatuses) {
@@ -127,10 +126,9 @@ class StatisticController {
                 for (let i = 0; i < 12; i++) {
                     let date = new Date();
                     date.setMonth(date.getMonth() - i + 1);
-                    date.setDate(1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     date.setMonth(date.getMonth() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     const orderStatuses = await statisticModel.getOrderStatus(from, to, transactionId);
                     let success = 0, fail = 0, receivedBack = 0, destroy = 0;
                     for (let orderStatus of orderStatuses) {
@@ -203,9 +201,9 @@ class StatisticController {
                 for (let i = 0; i < 24; i++) {
                     let date = new Date();
                     date.setHours(date.getHours() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:00:00`;
                     date.setHours(date.getHours() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:00:00`;
                     let send = 0, receive = 0;
                     if (!transactionId) {
                         send = await statisticModel.countReceiveOrder(from, to, 'receiver');
@@ -225,9 +223,9 @@ class StatisticController {
                 for (let i = 0; i < 7; i++) {
                     let date = new Date();
                     date.setDate(date.getDate() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     date.setDate(date.getDate() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     let send = 0, receive = 0;
                     if (!transactionId) {
                         send = await statisticModel.countReceiveOrder(from, to, 'receiver');
@@ -253,9 +251,9 @@ class StatisticController {
                 for (let i = 0; i < day; i++) {
                     let date = new Date();
                     date.setDate(date.getDate() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     date.setDate(date.getDate() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     let send = 0, receive = 0;
                     if (!transactionId) {
                         send = await statisticModel.countReceiveOrder(from, to, 'receiver');
@@ -274,11 +272,10 @@ class StatisticController {
                 let sendReceiveOrderList = [];
                 for (let i = 0; i < 12; i++) {
                     let date = new Date();
-                    date.setDate(1);
                     date.setMonth(date.getMonth() - i + 1);
-                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     date.setMonth(date.getMonth() - 1);
-                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     let send = 0, receive = 0;
                     if (!transactionId) {
                         send = await statisticModel.countReceiveOrder(from, to, 'receiver');
