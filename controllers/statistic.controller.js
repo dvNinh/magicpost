@@ -86,7 +86,13 @@ class StatisticController {
                 res.status(200).json(orderStatusList);
             } else if (req.body.timestamp == '1thang') {
                 let orderStatusList = [];
-                for (let i = 1; i <= 30; i++) {
+
+                var today = new Date();
+                var day;
+                if (today.getMonth() == 0) day = new Date(today.getFullYear() - 1, 12, 0).getDate();
+                else day = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+
+                for (let i = 1; i <= day; i++) {
                     let date = new Date();
                     date.setDate(date.getDate() - i + 1);
                     let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;

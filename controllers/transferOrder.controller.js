@@ -35,7 +35,14 @@ class TransferOrderController {
             res.status(400).json({ message: 'order id is required' });
             return;
         }
-        param.order_id = req.params.id;
+        const id = req.params.id;
+        const order = await orderModel.getOrderById(id);
+        if (!order) {
+            res.status(400).json({ message: 'invalid order' });
+            return;
+        }
+
+        param.order_id = id;
 
         const orderStatus = await orderStatusModel.getOrderStatusById(param.order_id);
         if (orderStatus.current_status == 'received') {
@@ -61,7 +68,37 @@ class TransferOrderController {
         param.current_status = "arriving";
 
         await transferOrderModel.createTransferOrder(param);
-        await orderStatusModel.updateOrderStatus({ current_position: null }, { order_id: req.params.id });
+
+        const userTransaction = req.session.user.transaction;
+
+        const update = {};
+
+        const transferOrder = await transferOrderModel.getTransferOrderById(id);
+        const transferType = transferOrder.type;
+
+        const senderTransaction = order.SenderTransactionAreaID;
+        const senderTrans = await transactionModel.getTransactionById(senderTransaction);
+        const senderGathering = senderTrans.gatheringId;
+
+        const receiverTransaction = order.ReceiverTransactionAreaID;
+        const receiverTrans = await transactionModel.getTransactionById(receiverTransaction);
+        const receiverGathering = receiverTrans.gatheringId;
+
+        if (transferType == 'send') {
+            if (userTransaction == senderTransaction) update.time_leave_s_trans1 = now;
+            if (userTransaction == senderGathering) update.time_leave_s_gather1 = now;
+            if (userTransaction == receiverGathering) update.time_leave_s_gather2 = now;
+            update.last_update = now;
+            update.current_position = null;
+        } else if (transferType == 'return') {
+            if (userTransaction == senderGathering) update.time_leave_r_gather1 = now;
+            if (userTransaction == receiverGathering) update.time_leave_r_gather2 = now;
+            if (userTransaction == receiverTransaction) update.time_leave_r_trans2 = now;
+            update.last_update = now;
+            update.current_position = null;
+        }
+
+        await orderStatusModel.updateOrderStatus(update, { order_id: id });
 
         res.status(201).json({ message: 'Success' });
     }
@@ -94,7 +131,7 @@ class TransferOrderController {
         const receiverGathering = receiverTrans.gatheringId;
 
         if (!order) {
-            res.status(400).json({ message: 'invalid required' });
+            res.status(400).json({ message: 'invalid order' });
             return;
         } else if (transferType == 'send') {
             if (userTransaction == senderTransaction) update.time_send_trans1 = now;

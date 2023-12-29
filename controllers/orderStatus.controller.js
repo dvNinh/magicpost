@@ -2,6 +2,7 @@ const orderModel = require('../models/order.model');
 const orderStatusModel = require('../models/orderStatus.model');
 
 const transactionModel = require('../models/transaction.model');
+const gatheringModel = require('../models/gathering.model');
 const statisticModel = require('../models/statistic.model');
 
 async function getAction(orderStatus) {
@@ -211,100 +212,173 @@ class OrderStatusController {
         const senderTransaction = order.SenderTransactionAreaID;
         const senderTrans = await transactionModel.getTransactionById(senderTransaction);
         const senderGathering = senderTrans.gatheringId;
+        const senderGather = await gatheringModel.getGatheringById(senderGathering);
     
         const receiverTransaction = order.ReceiverTransactionAreaID;
         const receiverTrans = await transactionModel.getTransactionById(receiverTransaction);
         const receiverGathering = receiverTrans.gatheringId;
+        const receiverGather = await gatheringModel.getGatheringById(receiverGathering);
 
         let status = [];
         if (orderStatus.time_send_trans1) {
             status.push({
                 time: orderStatus.time_send_trans1,
                 position: senderTransaction,
+                name: senderTrans.TransactionAreaNAME,
                 status: 'receive'
             });
         }
+        if (orderStatus.time_leave_s_trans1) {
+            status.push({
+                time: orderStatus.time_leave_s_trans1,
+                position: null,
+                name: null,
+                status: 'receive'
+            });
+        }
+
         if (orderStatus.time_send_gather1) {
             status.push({
                 time: orderStatus.time_send_gather1,
                 position: senderGathering,
+                name: senderGather.name,
                 status: 'send'
             });
         }
+        if (orderStatus.time_leave_s_gather1) {
+            status.push({
+                time: orderStatus.time_leave_s_gather1,
+                position: null,
+                name: null,
+                status: 'send'
+            });
+        }
+
         if (orderStatus.time_send_gather2) {
             status.push({
                 time: orderStatus.time_send_gather2,
                 position: receiverGathering,
+                name: receiverGather.name,
                 status: 'send'
             });
         }
+        if (orderStatus.time_leave_s_gather2) {
+            status.push({
+                time: orderStatus.time_leave_s_gather2,
+                position: null,
+                name: null,
+                status: 'send'
+            });
+        }
+
         if (orderStatus.time_send_trans2) {
             status.push({
                 time: orderStatus.time_send_trans2,
                 position: receiverTransaction,
+                name: receiverTrans.TransactionAreaNAME,
                 status: 'send'
             });
         }
         if (orderStatus.time_ship) {
             status.push({
                 time: orderStatus.time_ship,
-                position: receiverTransaction,
+                position: null,
+                name: null,
                 status: 'ship'
             });
         }
+
         if (orderStatus.time_receive) {
             status.push({
                 time: orderStatus.time_receive,
-                position: receiverTransaction,
+                position: null,
+                name: null,
                 status: 'success'
             });
         }
+
         if (orderStatus.time_return_trans2) {
             status.push({
                 time: orderStatus.time_return_trans2,
                 position: receiverTransaction,
+                name: receiverTrans.TransactionAreaNAME,
                 status: 'fail'
             });
         }
+        if (orderStatus.time_leave_r_trans2) {
+            status.push({
+                time: orderStatus.time_leave_r_trans2,
+                position: null,
+                name: null,
+                status: 'return'
+            });
+        }
+
         if (orderStatus.time_return_gather2) {
             status.push({
                 time: orderStatus.time_return_gather2,
                 position: receiverGathering,
+                name: receiverGather.name,
                 status: 'return'
             });
         }
+        if (orderStatus.time_leave_r_gather2) {
+            status.push({
+                time: orderStatus.time_leave_r_gather2,
+                position: null,
+                name: null,
+                status: 'return'
+            });
+        }
+
         if (orderStatus.time_return_gather1) {
             status.push({
                 time: orderStatus.time_return_gather1,
                 position: senderGathering,
+                name: senderGather.name,
                 status: 'return'
             });
         }
+        if (orderStatus.time_leave_r_gather1) {
+            status.push({
+                time: orderStatus.time_leave_r_gather1,
+                position: null,
+                name: null,
+                status: 'return'
+            });
+        }
+
         if (orderStatus.time_return_trans1) {
             status.push({
                 time: orderStatus.time_return_trans1,
                 position: senderTransaction,
+                name: senderTrans.TransactionAreaNAME,
                 status: 'return'
             });
         }
         if (orderStatus.time_ship_back) {
             status.push({
                 time: orderStatus.time_ship_back,
-                position: senderTransaction,
+                position: null,
+                name: null,
                 status: 'shipBack'
             });
         }
+
         if (orderStatus.time_receive_back) {
             status.push({
                 time: orderStatus.time_receive_back,
-                position: senderTransaction,
+                position: null,
+                name: null,
                 status: 'receiveBack'
             });
         }
+
         if (orderStatus.time_destroy) {
             status.push({
                 time: orderStatus.time_destroy,
-                position: senderTransaction,
+                position: null,
+                name: null,
                 status: 'destroy'
             });
         }
