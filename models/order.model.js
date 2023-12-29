@@ -28,6 +28,34 @@ class OrderModel {
         return rows;
     }
 
+    async searchOrder(searchValue, from, to, page, limit, sortOrder, filter) {
+        const sort = sortOrder == 'ascending' ? 'ASC' : 'DESC';
+        let where = '';
+        let values = [];
+        if (from) {
+            where += 'AND os.last_update >= ? ';
+            values.push(from);
+        }
+        if (to) {
+            where += 'AND os.last_update <= ? ';
+            values.push(to);
+        }
+        if (filter) {
+            where += 'AND os.current_status = ? ';
+            values.push(filter);
+        }
+        values.push((page - 1) * limit, limit);
+        var sql = 
+            'SELECT od.* ' +
+            'FROM `ORDER` od ' +
+            'JOIN ORDER_STATUS os ON od.id = os.order_id ' +
+            `WHERE id LIKE "%${searchValue}%" ` +
+            `${where}` +
+            `ORDER BY os.last_update ${sort} LIMIT ?, ?`;
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    }
+
     async createOrder(param) {
         var sql = 'INSERT INTO `ORDER` SET ?';
         const [results] = await pool.query(sql, param);

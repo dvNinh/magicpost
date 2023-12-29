@@ -60,9 +60,10 @@ router.post('/order/shipBack/:id', authController.onlyStaff, orderStatusControll
 router.post('/order/backSuccess/:id', authController.onlyStaff, orderStatusController.receivedBackSuccessOrder);
 router.post('/order/backFail/:id', authController.onlyStaff, orderStatusController.receivedBackFailOrder);
 
-router.get('/search/transaction', searchController.searchTransaction);
-router.get('/search/gathering', searchController.searchGathering);
-router.get('/search/order', searchController.searchOrder);
+router.get('/search/transaction', authController.isLogged, searchController.searchTransaction);
+router.get('/search/gathering', authController.isLogged, searchController.searchGathering);
+router.get('/search/order', authController.isLogged, searchController.searchOrder);
+router.get('/search/orderStatus', searchController.searchOrderStatus);
 
 router.post('/statistic/orderStatus', authController.isLogged, statisticController.statisticOrderStatus);
 router.post('/statistic/orderSendReceive', authController.isManager, statisticController.statisticSendReceiveOrder);

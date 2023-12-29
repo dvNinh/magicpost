@@ -49,111 +49,6 @@ async function getAction(orderStatus) {
     return action;
 }
 
-async function getOrderStatus(orderStatus) {
-    const order = await orderModel.getOrderById(orderStatus.order_id);
-    const senderTransaction = order.SenderTransactionAreaID;
-    const senderTrans = await transactionModel.getTransactionById(senderTransaction);
-    const senderGathering = senderTrans.gatheringId;
-
-    const receiverTransaction = order.ReceiverTransactionAreaID;
-    const receiverTrans = await transactionModel.getTransactionById(receiverTransaction);
-    const receiverGathering = receiverTrans.gatheringId;
-
-    let status = [];
-    if (orderStatus.time_send_trans1) {
-        status.push({
-            time: orderStatus.time_send_trans1,
-            position: senderTransaction,
-            description: `Don hang duoc gui tai diem giao dich ${senderTransaction}`
-        });
-    }
-    if (orderStatus.time_send_gather1) {
-        status.push({
-            time: orderStatus.time_send_gather1,
-            position: senderGathering,
-            description: `Don hang den diem tap ket ${senderGathering}`
-        });
-    }
-    if (orderStatus.time_send_gather2) {
-        status.push({
-            time: orderStatus.time_send_gather2,
-            position: receiverGathering,
-            description: `Don hang den diem tap ket ${receiverGathering}`
-        });
-    }
-    if (orderStatus.time_send_trans2) {
-        status.push({
-            time: orderStatus.time_send_trans2,
-            position: receiverTransaction,
-            description: `Don hang den diem giao dich ${receiverTransaction}`
-        });
-    }
-    if (orderStatus.time_ship) {
-        status.push({
-            time: orderStatus.time_ship,
-            position: receiverTransaction,
-            description: `Don hang dang chuyen den nguoi nhan`
-        });
-    }
-    if (orderStatus.time_receive) {
-        status.push({
-            time: orderStatus.time_receive,
-            position: receiverTransaction,
-            description: `Nguoi nhan da nhan duoc hang`
-        });
-    }
-    if (orderStatus.time_return_trans2) {
-        status.push({
-            time: orderStatus.time_return_trans2,
-            position: receiverTransaction,
-            description: `Giao hang ko thanh cong don hang quay lai diem giao dich ${receiverTransaction}`
-        });
-    }
-    if (orderStatus.time_return_gather2) {
-        status.push({
-            time: orderStatus.time_return_gather2,
-            position: receiverGathering,
-            description: `Don hang quay lai diem tap ket ${receiverGathering}`
-        });
-    }
-    if (orderStatus.time_return_gather1) {
-        status.push({
-            time: orderStatus.time_return_gather1,
-            position: senderGathering,
-            description: `Don hang quay lai tap ket ${senderGathering}`
-        });
-    }
-    if (orderStatus.time_return_trans1) {
-        status.push({
-            time: orderStatus.time_return_trans1,
-            position: senderTransaction,
-            description: `Don hang quay lai diem giao dich ${senderTransaction}`
-        });
-    }
-    if (orderStatus.time_ship_back) {
-        status.push({
-            time: orderStatus.time_ship_back,
-            position: senderTransaction,
-            description: `Don hang dang giao lai cho nguoi gui`
-        });
-    }
-    if (orderStatus.time_receive_back) {
-        status.push({
-            time: orderStatus.time_receive_back,
-            position: senderTransaction,
-            description: `Da giao lai cho nguoi gui`
-        });
-    }
-    if (orderStatus.time_destroy) {
-        status.push({
-            time: orderStatus.time_destroy,
-            position: senderTransaction,
-            description: `Giao lai cho nguoi gui ko thanh cong`
-        });
-    }
-    return status;
-}
-
 class OrderStatusController {
     async getOrderOfTransaction(req, res, next) {
         const id = req.session.user.transaction;
@@ -162,7 +57,7 @@ class OrderStatusController {
         const orders = await orderStatusModel.getOrderStatus({ current_position: id }, page);
         let orderList = [];
         for (let order of orders) {
-            let status = await getOrderStatus(order);
+            let status = await this.getOrderStatus(order);
             let action = await getAction(order);
             let od = {
                 id: order.order_id,
@@ -309,6 +204,111 @@ class OrderStatusController {
         });
 
         res.status(201).json({ message: 'Success' });
+    }
+
+    async getOrderStatus(orderStatus) {
+        const order = await orderModel.getOrderById(orderStatus.order_id);
+        const senderTransaction = order.SenderTransactionAreaID;
+        const senderTrans = await transactionModel.getTransactionById(senderTransaction);
+        const senderGathering = senderTrans.gatheringId;
+    
+        const receiverTransaction = order.ReceiverTransactionAreaID;
+        const receiverTrans = await transactionModel.getTransactionById(receiverTransaction);
+        const receiverGathering = receiverTrans.gatheringId;
+
+        let status = [];
+        if (orderStatus.time_send_trans1) {
+            status.push({
+                time: orderStatus.time_send_trans1,
+                position: senderTransaction,
+                status: 'receive'
+            });
+        }
+        if (orderStatus.time_send_gather1) {
+            status.push({
+                time: orderStatus.time_send_gather1,
+                position: senderGathering,
+                status: 'send'
+            });
+        }
+        if (orderStatus.time_send_gather2) {
+            status.push({
+                time: orderStatus.time_send_gather2,
+                position: receiverGathering,
+                status: 'send'
+            });
+        }
+        if (orderStatus.time_send_trans2) {
+            status.push({
+                time: orderStatus.time_send_trans2,
+                position: receiverTransaction,
+                status: 'send'
+            });
+        }
+        if (orderStatus.time_ship) {
+            status.push({
+                time: orderStatus.time_ship,
+                position: receiverTransaction,
+                status: 'ship'
+            });
+        }
+        if (orderStatus.time_receive) {
+            status.push({
+                time: orderStatus.time_receive,
+                position: receiverTransaction,
+                status: 'success'
+            });
+        }
+        if (orderStatus.time_return_trans2) {
+            status.push({
+                time: orderStatus.time_return_trans2,
+                position: receiverTransaction,
+                status: 'fail'
+            });
+        }
+        if (orderStatus.time_return_gather2) {
+            status.push({
+                time: orderStatus.time_return_gather2,
+                position: receiverGathering,
+                status: 'return'
+            });
+        }
+        if (orderStatus.time_return_gather1) {
+            status.push({
+                time: orderStatus.time_return_gather1,
+                position: senderGathering,
+                status: 'return'
+            });
+        }
+        if (orderStatus.time_return_trans1) {
+            status.push({
+                time: orderStatus.time_return_trans1,
+                position: senderTransaction,
+                status: 'return'
+            });
+        }
+        if (orderStatus.time_ship_back) {
+            status.push({
+                time: orderStatus.time_ship_back,
+                position: senderTransaction,
+                status: 'shipBack'
+            });
+        }
+        if (orderStatus.time_receive_back) {
+            status.push({
+                time: orderStatus.time_receive_back,
+                position: senderTransaction,
+                status: 'receiveBack'
+            });
+        }
+        if (orderStatus.time_destroy) {
+            status.push({
+                time: orderStatus.time_destroy,
+                position: senderTransaction,
+                status: 'destroy'
+            });
+        }
+        return status;
     }
 }
 

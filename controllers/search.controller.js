@@ -2,6 +2,7 @@ const transactionModel = require('../models/transaction.model');
 const gatheringModel = require('../models/gathering.model');
 const cityModel = require('../models/city.model');
 const districtModel = require('../models/district.model');
+const orderModel = require('../models/order.model');
 const orderStatusModel = require('../models/orderStatus.model');
 const orderStatusController = require('./orderStatus.controller');
 
@@ -104,22 +105,66 @@ class SearchController {
     }
 
     async searchOrder(req, res, next) {
+        const searchValue = req.query.searchValue ? req.query.searchValue : '';
+        const page = !!parseInt(req.query.page) ? parseInt(req.query.page) : 1;
+        const limit = !!parseInt(req.query.limit) ? parseInt(req.query.limit) : 10;
+        const sortOrder = req.query.sortOrder ? req.query.sortOrder : 'descending';
+        
+        let from, to, filter;
+        
+        if (req.query.from) from = req.query.from;
+        if (req.query.to) to = req.query.to;
+        if (req.query.filter) {
+            if (req.query.filter == 'Arriving') filter = 'send';
+            if (req.query.filter == 'Processing') filter = 'return';
+            if (req.query.filter == 'Departed') filter = 'received';
+            if (req.query.filter == 'Returned') filter = 'received_back';
+            if (req.query.filter == 'Discarded') filter = 'destroyed';
+        }
+
+        const orders = await orderModel.searchOrder(searchValue, from, to, page, limit, sortOrder, filter);
+        let orderList = [];
+        for (let order of orders) {
+            const orderStatus = await orderStatusModel.getOrderStatusById(order.id);
+            let status = await orderStatusController.getOrderStatus(orderStatus);
+            let od = {
+                id: order.id,
+                sender: order.SenderID,
+                receiver: order.ReceiverID,
+                senderTransactionId: order.SenderTransactionAreaID,
+                receiverTransactionId: order.ReceiverTransactionAreaID,
+                senderAddress: order.SenderAddress,
+                receiverAddress: order.ReceiverAddress,
+                arriveAt: order.ArriveAt,
+                orderType: order.OrderType,
+                orderInfo: JSON.parse(order.OrderInfo),
+                price: JSON.parse(order.Price),
+                attachedFile: order.AttachedFile,
+                weight: order.Weight,
+                shippingCost: order.ShippingCost,
+                othersCost: order.OthersCost,
+                notes: order.Notes,
+                status
+            };
+            orderList.push(od);
+        }
+        res.status(200).json(orderList);
+    }
+
+    async searchOrderStatus(req, res, next) {
         if (!req.query.id) {
             res.status(400).json({ message: 'order id is required' });
             return;
         }
         const id = req.query.id;
-
-        const order = await orderStatusModel.getOrderStatusById(id);
-        if (!order) {
+        
+        const orderStatus = await orderStatusModel.getOrderStatusById(id);
+        if (!orderStatus) {
             res.status(404).json({ message: 'order not found' });
             return;
         }
-        const orderStatus = await orderStatusModel.getOrderStatusById(id);
-        res.status(200).json({
-            order,
-            status: orderStatusController.getOrderStatus(orderStatus)
-        });
+        let status = await orderStatusController.getOrderStatus(orderStatus);
+        res.status(200).json(status);
     }
 }
 
