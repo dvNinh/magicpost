@@ -167,15 +167,18 @@ class SearchController {
                 else if (odst.time_ship) departed.push(od);
                 else if (odst.time_send_trans2) processing.push(od);
                 else if (odst.time_leave_s_gather2) arriving.push(od);
-            } else if (transaction == receiverGathering) {
+            }
+            if (transaction == receiverGathering) {
                 if (odst.time_leave_s_gather2) departed.push(od);
                 else if (odst.time_send_gather2) processing.push(od);
                 else if (odst.time_leave_s_gather1) arriving.push(od);
-            } else if (transaction == senderGathering) {
+            }
+            if (transaction == senderGathering) {
                 if (odst.time_leave_s_gather1) departed.push(od);
                 else if (odst.time_send_gather1) processing.push(od);
                 else if (odst.time_leave_s_trans1) arriving.push(od);
-            } else if (transaction == senderTransaction) {
+            }
+            if (transaction == senderTransaction) {
                 if (odst.time_destroy) discarded.push(od);
                 else if (odst.time_leave_s_trans1) departed.push(od);
                 else if (odst.time_send_trans1) processing.push(od);
