@@ -123,9 +123,9 @@ class StatisticController {
                 res.status(200).json(orderStatusList);
             } else if (req.query.timestamp == '1nam') {
                 let orderStatusList = [];
-                for (let i = 0; i < 12; i++) {
-                    let date = new Date();
-                    date.setMonth(date.getMonth() - i + 1);
+                let date = new Date();
+                date.setMonth(date.getMonth());
+                for (let i = 1; i <= 12; i++) {
                     let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     date.setMonth(date.getMonth() - 1);
                     let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
@@ -169,11 +169,8 @@ class StatisticController {
                     }
                 }
                 res.status(200).json([{
-                    from: null,
-                    to: null,
-                    status: {
-                        success, fail, receivedBack, destroy 
-                    }
+                    from: null, to: null,
+                    status: { success, fail, receivedBack, destroy }
                 }]);
             }
         }
@@ -270,9 +267,8 @@ class StatisticController {
                 res.status(200).json(sendReceiveOrderList);
             } else if (req.query.timestamp == '1nam') {
                 let sendReceiveOrderList = [];
-                for (let i = 0; i < 12; i++) {
-                    let date = new Date();
-                    date.setMonth(date.getMonth() - i + 1);
+                let date = new Date();
+                for (let i = 1; i <= 12; i++) {
                     let to = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
                     date.setMonth(date.getMonth() - 1);
                     let from = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} 0:00:00`;
