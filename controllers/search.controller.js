@@ -131,6 +131,7 @@ class SearchController {
         for (let order of orders) {
             const orderStatus = await orderStatusModel.getOrderStatusById(order.id);
             let status = await orderStatusController.getOrderStatus(orderStatus);
+            let action = await orderStatusController.getAction(orderStatus);
             let od = {
                 id: order.id,
                 sender: order.SenderID,
@@ -148,7 +149,8 @@ class SearchController {
                 shippingCost: order.ShippingCost,
                 othersCost: order.OthersCost,
                 notes: order.Notes,
-                status
+                status,
+                action
             };
 
             const senderTransaction = od.senderTransactionId;
@@ -166,20 +168,77 @@ class SearchController {
                 if (odst.time_return_trans2) returned.push(od);
                 else if (odst.time_ship) departed.push(od);
                 else if (odst.time_send_trans2) processing.push(od);
-                else if (odst.time_leave_s_gather2) arriving.push(od);
+                else if (odst.time_leave_s_gather2) {
+                    if (req.session.user.role != 'leader') {
+                        od.action = {
+                            type: 'accept',
+                            successAction: `/order/acceptOrder/${od.id}`
+                        };
+                    }
+                    arriving.push(od);
+                }
             }
             if (transaction == receiverGathering) {
-                if (odst.time_leave_s_gather2) departed.push(od);
+                if (odst.time_leave_r_gather2) departed.push(od);
+                else if (odst.time_return_gather2) processing.push(od);
+                else if (odst.time_leave_r_trans2) {
+                    if (req.session.user.role != 'leader') {
+                        od.action = {
+                            type: 'accept',
+                            successAction: `/order/acceptOrder/${od.id}`
+                        };
+                    }
+                    arriving.push(od);
+                }
+                else if (odst.time_leave_s_gather2) departed.push(od);
                 else if (odst.time_send_gather2) processing.push(od);
-                else if (odst.time_leave_s_gather1) arriving.push(od);
+                else if (odst.time_leave_s_gather1) {
+                    if (req.session.user.role != 'leader') {
+                        od.action = {
+                            type: 'accept',
+                            successAction: `/order/acceptOrder/${od.id}`
+                        };
+                    }
+                    arriving.push(od);
+                }
             }
             if (transaction == senderGathering) {
-                if (odst.time_leave_s_gather1) departed.push(od);
+                if (odst.time_leave_r_gather1) departed.push(od);
+                else if (odst.time_return_gather1) processing.push(od);
+                else if (odst.time_leave_r_gather2) {
+                    if (req.session.user.role != 'leader') {
+                        od.action = {
+                            type: 'accept',
+                            successAction: `/order/acceptOrder/${od.id}`
+                        };
+                    }
+                    arriving.push(od);
+                }
+                else if (odst.time_leave_s_gather1) departed.push(od);
                 else if (odst.time_send_gather1) processing.push(od);
-                else if (odst.time_leave_s_trans1) arriving.push(od);
+                else if (odst.time_leave_s_trans1) {
+                    if (req.session.user.role != 'leader') {
+                        od.action = {
+                            type: 'accept',
+                            successAction: `/order/acceptOrder/${od.id}`
+                        };
+                    }
+                    arriving.push(od);
+                }
             }
             if (transaction == senderTransaction) {
                 if (odst.time_destroy) discarded.push(od);
+                else if (odst.time_ship_back) departed.push(od);
+                else if (odst.time_return_trans1) processing.push(od);
+                else if (odst.time_leave_r_gather1) {
+                    if (req.session.user.role != 'leader') {
+                        od.action = {
+                            type: 'accept',
+                            successAction: `/order/acceptOrder/${od.id}`
+                        };
+                    }
+                    arriving.push(od);
+                }
                 else if (odst.time_leave_s_trans1) departed.push(od);
                 else if (odst.time_send_trans1) processing.push(od);
             }
@@ -190,7 +249,7 @@ class SearchController {
             if (filter.includes('Returned')) orderList = [...orderList, ...returned];
             if (filter.includes('Discarded')) orderList = [...orderList, ...discarded];
         }
-        res.status(200).json(orderList);
+        res.status(200).json(Array.from(new Set(orderList)));
     }
 
     async searchOrderStatus(req, res, next) {

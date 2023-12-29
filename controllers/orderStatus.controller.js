@@ -5,51 +5,6 @@ const transactionModel = require('../models/transaction.model');
 const gatheringModel = require('../models/gathering.model');
 const statisticModel = require('../models/statistic.model');
 
-async function getAction(orderStatus) {
-    const order = await orderModel.getOrderById(orderStatus.order_id);
-    const senderTransaction = order.SenderTransactionAreaID;
-    const senderTrans = await transactionModel.getTransactionById(senderTransaction);
-    const senderGathering = senderTrans.gatheringId;
-
-    const receiverTransaction = order.ReceiverTransactionAreaID;
-    const receiverTrans = await transactionModel.getTransactionById(receiverTransaction);
-    const receiverGathering = receiverTrans.gatheringId;
-
-    let action = {};
-
-    if (orderStatus.current_status == 'send') {
-        if (orderStatus.current_position == receiverTransaction) {
-            if (!orderStatus.time_ship) action = { ship: `/order/ship/${orderStatus.order_id}` };
-            else action = {
-                successOrder: `/order/success/${orderStatus.order_id}`,
-                failOrder: `/order/fail/${orderStatus.order_id}`
-            };
-        } else if (orderStatus.current_position == receiverGathering) {
-            action = { send: `/order/sendOrder/${orderStatus.order_id}/${receiverTransaction}` };
-        } else if (orderStatus.current_position == senderGathering) {
-            action = { send: `/order/sendOrder/${orderStatus.order_id}/${receiverGathering}` };
-        } else if (orderStatus.current_position == senderTransaction) {
-            action = { send: `/order/sendOrder/${orderStatus.order_id}/${senderGathering}` };
-        }
-    } else if (orderStatus.current_status == 'return') {
-        if (orderStatus.current_position == senderTransaction) {
-            if (!orderStatus.time_ship_back) action = { shipBack: `/order/shipBack/${orderStatus.order_id}` };
-            else action = {
-                backSuccess: `/order/backSuccess/${orderStatus.order_id}`,
-                destroy: `/order/backFail/${orderStatus.order_id}`
-            };
-        } else if (orderStatus.current_position == senderGathering) {
-            action = { send: `/order/sendOrder/${orderStatus.order_id}/${senderTransaction}` };
-        } else if (orderStatus.current_position == receiverGathering) {
-            action = { send: `/order/sendOrder/${orderStatus.order_id}/${senderGathering}` };
-        } else if (orderStatus.current_position == receiverTransaction) {
-            action = { send: `/order/sendOrder/${orderStatus.order_id}/${receiverGathering}` };
-        }
-    }
-
-    return action;
-}
-
 class OrderStatusController {
     async getOrderOfTransaction(req, res, next) {
         const id = req.session.user.transaction;
@@ -59,7 +14,7 @@ class OrderStatusController {
         let orderList = [];
         for (let order of orders) {
             let status = await this.getOrderStatus(order);
-            let action = await getAction(order);
+            let action = await this.getAction(order);
             let od = {
                 id: order.order_id,
                 lastUpdate: order.last_update,
@@ -127,7 +82,7 @@ class OrderStatusController {
         const id = req.params.id;
 
         await orderStatusModel.updateOrderStatus({
-            time_return_trans1: now,
+            time_return_trans2: now,
             current_status: 'return',
             last_update: now,
         }, { order_id: id });
@@ -205,6 +160,85 @@ class OrderStatusController {
         });
 
         res.status(201).json({ message: 'Success' });
+    }
+
+    async getAction(orderStatus) {
+        const order = await orderModel.getOrderById(orderStatus.order_id);
+        const senderTransaction = order.SenderTransactionAreaID;
+        const senderTrans = await transactionModel.getTransactionById(senderTransaction);
+        const senderGathering = senderTrans.gatheringId;
+    
+        const receiverTransaction = order.ReceiverTransactionAreaID;
+        const receiverTrans = await transactionModel.getTransactionById(receiverTransaction);
+        const receiverGathering = receiverTrans.gatheringId;
+    
+        let action = {
+            type: 'notAvailable'
+        };
+    
+        if (orderStatus.current_status == 'send') {
+            if (orderStatus.current_position == receiverTransaction) {
+                if (!orderStatus.time_ship) {
+                    action = {
+                        type: 'startShipping',
+                        successAction: `/order/ship/${orderStatus.order_id}`
+                    };
+                } else {
+                    action = {
+                        type: 'finishShipping',
+                        successAction: `/order/success/${orderStatus.order_id}`,
+                        failedAction: `/order/fail/${orderStatus.order_id}`
+                    };
+                }
+            } else if (orderStatus.current_position == receiverGathering) {
+                action = {
+                    type: 'transfer',
+                    successAction: `/order/sendOrder/${orderStatus.order_id}/${receiverTransaction}`
+                };
+            } else if (orderStatus.current_position == senderGathering) {
+                action = {
+                    type: 'transfer',
+                    successAction: `/order/sendOrder/${orderStatus.order_id}/${receiverGathering}`
+                };
+            } else if (orderStatus.current_position == senderTransaction) {
+                action = {
+                    type: 'transfer',
+                    successAction: `/order/sendOrder/${orderStatus.order_id}/${senderGathering}`
+                };
+            }
+        } else if (orderStatus.current_status == 'return') {
+            if (orderStatus.current_position == senderTransaction) {
+                if (!orderStatus.time_ship_back) {
+                    action = {
+                        type: 'startShipping',
+                        successAction: `/order/shipBack/${orderStatus.order_id}`
+                    };
+                } else {
+                    action = {
+                        type: 'finishShipping',
+                        successAction: `/order/backSuccess/${orderStatus.order_id}`,
+                        failedAction: `/order/backFail/${orderStatus.order_id}`
+                    };
+                }
+            } else if (orderStatus.current_position == senderGathering) {
+                action = {
+                    type: 'transfer',
+                    send: `/order/sendOrder/${orderStatus.order_id}/${senderTransaction}`
+                };
+            } else if (orderStatus.current_position == receiverGathering) {
+                action = {
+                    type: 'transfer',
+                    send: `/order/sendOrder/${orderStatus.order_id}/${senderGathering}`
+                };
+            } else if (orderStatus.current_position == receiverTransaction) {
+                action = {
+                    type: 'transfer',
+                    send: `/order/sendOrder/${orderStatus.order_id}/${receiverGathering}`
+                };
+            }
+        }
+    
+        return action;
     }
 
     async getOrderStatus(orderStatus) {
