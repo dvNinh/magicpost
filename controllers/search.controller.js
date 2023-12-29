@@ -165,19 +165,19 @@ class SearchController {
                 if (od.status.time_return_trans2) returned.push(od);
                 else if (od.status.time_ship) departed.push(od);
                 else if (od.status.time_send_trans2) processing.push(od);
-                else arriving.push(od);
+                else if (od.status.time_leave_s_gather2) arriving.push(od);
             } else if (transaction == receiverGathering) {
-                if (od.status.time_send_trans2) departed.push(od);
+                if (od.status.time_leave_s_gather2) departed.push(od);
                 else if (od.status.time_send_gather2) processing.push(od);
-                else arriving.push(od);
+                else if (od.status.time_leave_s_gather1) arriving.push(od);
             } else if (transaction == senderGathering) {
-                if (od.status.time_send_gather2) departed.push(od);
+                if (od.status.time_leave_s_gather1) departed.push(od);
                 else if (od.status.time_send_gather1) processing.push(od);
-                else arriving.push(od);
+                else if (od.status.time_leave_s_trans1) arriving.push(od);
             } else if (transaction == senderTransaction) {
                 if (od.status.time_destroy) discarded.push(od);
-                else if (od.time_send_gather1) departed.push(od);
-                else processing.push(od);
+                else if (od.status.time_leave_s_trans1) departed.push(od);
+                else if (od.status.time_send_trans1) processing.push(od);
             }
 
             if (filter.includes('Arriving')) orderList = [...orderList, ...arriving];
